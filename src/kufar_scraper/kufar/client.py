@@ -1,7 +1,7 @@
-import httpx
-import re
-from bs4 import BeautifulSoup
 import asyncio
+import re
+
+import httpx
 
 
 class HttpKufarClient:
@@ -10,6 +10,8 @@ class HttpKufarClient:
 
     async def _get_user_page(self) -> str:
         response = await self._session.get(self._session.base_url)
+        if response.status_code != 200:
+            raise ConnectionError("Не удалось получить страницу пользователя")
 
         return response.text
 
@@ -20,7 +22,12 @@ class HttpKufarClient:
         return links
 
     async def _get_announcement_data(self, link: str) -> dict:
-        response = await self._session.get(link)
+        response: httpx.Response = await self._session.get(link)
+        if response.status_code == 429:
+            raise ConnectionError("Скорее всего, у вас включен VPN. Попробуйте отключить его и повторить попытку")
+        if response.status_code != 200:
+            raise ConnectionError("Не удалось получить данные объявления")
+
         raw = response.text
         data = {}
         price = re.findall(r'"price":.*?}', raw)
@@ -34,6 +41,9 @@ class HttpKufarClient:
 
     async def get_announcements_data(self) -> list[dict]:
         links = await self._get_announcements_links()
+        if not links:
+            raise ValueError("Не удалось найти объявления")
+
         data = await asyncio.gather(
             *[self._get_announcement_data(link) for link in links]
         )

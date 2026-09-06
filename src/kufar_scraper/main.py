@@ -1,31 +1,27 @@
 import asyncio
 import os
 
-from dotenv.main import load_dotenv
-import requests
-import re
-from bs4 import BeautifulSoup
 import httpx
-import dotenv
-from kufar_scraper.kufar.client import HttpKufarClient
+from dotenv.main import load_dotenv
 
+from kufar_scraper.kufar.client import HttpKufarClient
 
 load_dotenv()
 URL = os.getenv("USER_URL")
-
-
 
 async def main():
     if not URL:
         raise ValueError("USER_URL not set in .env")
 
-    c = HttpKufarClient(httpx.AsyncClient(base_url=URL))
+    async with httpx.AsyncClient(base_url=URL) as session:
+        c = HttpKufarClient(session)
 
-    all_data = await c.get_announcements_data()
-    print(all_data)
+        all_data = await c.get_announcements_data()
+        print(all_data)
 
-    for adv in all_data:
-        print(adv)
+        for adv in all_data:
+            for k, v in adv.items():
+                print(k, v)
 
 
 if __name__ == "__main__":
