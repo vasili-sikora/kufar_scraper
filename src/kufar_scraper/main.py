@@ -1,11 +1,9 @@
 import asyncio
 import os
 
-import httpx
 from dotenv.main import load_dotenv
 
-from kufar_scraper.cli import update_advertisements_in_db
-from kufar_scraper.kufar.client import HttpKufarClient
+from kufar_scraper.cli import update_advertisements_in_db, print_advertisements
 
 load_dotenv()
 URL = os.getenv("USER_URL")
@@ -16,6 +14,7 @@ async def main():
         raise ValueError("USER_URL is not set in .env")
 
     await update_advertisements_in_db()
+    print_advertisements()
 
 
 if __name__ == "__main__":

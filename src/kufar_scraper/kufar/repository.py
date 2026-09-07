@@ -25,14 +25,14 @@ class AdvertisementSQLiteRepository:
 
     def get_advertisements(self) -> list[AdvertisementORM]:
         with self.sessionmaker as session:
-            return session.execute(select(AdvertisementORM)).scalars_all()
+            return session.execute(select(AdvertisementORM)).scalars().all()
 
     def update_advertisement(self, advertisement: Advertisement) -> None:
         with self.sessionmaker as session:
             try:
                 advertisement_orm = session.execute(
                     select(AdvertisementORM).where(AdvertisementORM.url == advertisement.url),
-                )
+                ).scalar_one_or_none()
                 if advertisement_orm:
                     advertisement_orm.title = advertisement.title
                     advertisement_orm.description = advertisement.description
