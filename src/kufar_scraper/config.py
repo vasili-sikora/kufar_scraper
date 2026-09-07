@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-@dataclass
+@dataclass(frozen=True)
 class Config:
     DATABASE_URL: str
     USER_URL: str
