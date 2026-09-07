@@ -3,43 +3,53 @@ import re
 
 import httpx
 
+from kufar_scraper.config import USER_URL
+from kufar_scraper.kufar.dto import Advertisement
+
+if not USER_URL:
+    raise ValueError("USER_URL is not set")
 
 class HttpKufarClient:
     def __init__(self, session: httpx.AsyncClient):
         self._session = session
+        self._user_url = USER_URL
 
     async def _get_user_page(self) -> str:
-        response = await self._session.get(self._session.base_url)
+        response = await self._session.get(self._user_url)
         if response.status_code != 200:
             raise ConnectionError("Не удалось получить страницу пользователя")
 
-        return response.text
+        page_html = response.text
+        print(page_html)
+        return page_html
 
     async def _get_announcements_links(self) -> list[str]:
         raw_page = await self._get_user_page()
         links = re.findall(r'"adViewLink":"([^"]*)"', raw_page)
-
+        print(links)
         return links
 
-    async def _get_announcement_data(self, link: str) -> dict:
+    async def _get_announcement_data(self, link: str) -> Advertisement:
         response: httpx.Response = await self._session.get(link)
         if response.status_code == 429:
-            raise ConnectionError("Скорее всего, у вас включен VPN. Попробуйте отключить его и повторить попытку")
+            raise ConnectionError(
+                "Скорее всего, у вас включен VPN. Попробуйте отключить его и повторить попытку"
+            )
         if response.status_code != 200:
             raise ConnectionError("Не удалось получить данные объявления")
 
         raw = response.text
-        data = {}
-        price = re.findall(r'"price":.*?}', raw)
-        data["price"] = price[0].split('"')[3]
-        title = re.findall(r'"title":.*?}', raw)
-        data["title"] = title[0].split('"')[3]
-        description = re.findall(r'"description":.*?}', raw)
-        data["description"] = description[0].split('"')[3]
+        price = re.findall(r'"price":.*?}', raw)[0].split('"')[3]
+        title = re.findall(r'"title":.*?}', raw)[0].split('"')[3]
+        description = re.findall(r'"description":.*?}', raw)[0].split('"')[3]
 
-        return data
+        advertisement = Advertisement(
+            title=str(title), description=str(description), price=str(price), url=link
+        )
 
-    async def get_announcements_data(self) -> list[dict]:
+        return advertisement
+
+    async def get_announcements_data(self) -> list[Advertisement]:
         links = await self._get_announcements_links()
         if not links:
             raise ValueError("Не удалось найти объявления")
@@ -47,5 +57,5 @@ class HttpKufarClient:
         data = await asyncio.gather(
             *[self._get_announcement_data(link) for link in links]
         )
-
+        print(data)
         return data

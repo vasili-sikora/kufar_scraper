@@ -5,14 +5,16 @@ description = "scraper for Kufar advretisements through HTTP"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "alembic>=1.19.2",
     "bs4>=0.0.2",
     "dotenv>=0.9.9",
     "httpx>=0.28.1",
     "requests>=2.34.2",
+    "sqlalchemy>=2.0.52",
 ]
 
 [project.scripts]
-python-kufar-scraper = "src:kufar_scraper:main"
+python-kufar-scraper = "src.kufar_scraper:main"
 
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
