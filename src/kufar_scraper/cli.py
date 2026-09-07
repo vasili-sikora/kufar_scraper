@@ -1,5 +1,6 @@
 import httpx
 
+from kufar_scraper.config import load_config
 from kufar_scraper.kufar.client import HttpKufarClient
 from kufar_scraper.kufar.dto import Advertisement
 from kufar_scraper.kufar.repository import AdvertisementSQLiteRepository
@@ -9,9 +10,9 @@ from kufar_scraper.sqlite.sqlalchemy_conf import SESSIONMAKER
 async def update_advertisements_in_db() -> None:
     async with httpx.AsyncClient() as client:
         try:
-            client = HttpKufarClient(client)
+            kufar_client = HttpKufarClient(client, load_config().USER_URL)
             print("Получаем объявления...")
-            advertisements = await client.get_announcements_data()
+            advertisements = await kufar_client.get_announcements_data()
 
             with SESSIONMAKER as session:
                 repository = AdvertisementSQLiteRepository(session)

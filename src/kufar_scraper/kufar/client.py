@@ -3,16 +3,13 @@ import re
 
 import httpx
 
-from kufar_scraper.config import USER_URL
 from kufar_scraper.kufar.dto import Advertisement
 
-if not USER_URL:
-    raise ValueError("USER_URL is not set")
 
 class HttpKufarClient:
-    def __init__(self, session: httpx.AsyncClient):
+    def __init__(self, session: httpx.AsyncClient, user_url: str):
         self._session = session
-        self._user_url = USER_URL
+        self._user_url = user_url
 
     async def _get_user_page(self) -> str:
         response = await self._session.get(self._user_url)
