@@ -9,18 +9,23 @@ load_dotenv()
 class Config:
     DATABASE_URL: str
     USER_URL: str
+    BEARER_TOKEN: str
 
 
 def load_config() -> Config:
-    DATABASE_URL = os.getenv("DATABASE_URL")
-    USER_URL = os.getenv("USER_URL")
+    database_url = os.getenv("DATABASE_URL")
+    user_url = os.getenv("USER_URL")
+    bearer_token = os.getenv("BEARER_TOKEN")
 
-    if not DATABASE_URL:
+    if not database_url:
         raise ValueError("DATABASE_URL is not set in .env")
-    if not USER_URL:
+    if not user_url:
         raise ValueError("USER_URL is not set in .env")
+    if not bearer_token:
+        raise ValueError("BEARER_TOKEN is not set in .env")
 
     return Config(
-        DATABASE_URL=DATABASE_URL,
-        USER_URL=USER_URL,
+        DATABASE_URL=database_url,
+        USER_URL=user_url,
+        BEARER_TOKEN=bearer_token,
     )

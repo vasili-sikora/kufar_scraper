@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Advertisement:
+class AdvertisementDto:
+    kufar_id: int
     title: str
     description: str
     price: str

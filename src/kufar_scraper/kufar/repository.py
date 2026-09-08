@@ -1,6 +1,6 @@
 from sqlalchemy.sql.expression import select
 
-from kufar_scraper.kufar.dto import Advertisement
+from kufar_scraper.kufar.dto import AdvertisementDto
 from kufar_scraper.sqlite.models import AdvertisementORM
 
 
@@ -8,7 +8,7 @@ class AdvertisementSQLiteRepository:
     def __init__(self, sessionmaker):
         self.sessionmaker = sessionmaker
 
-    def add_advertisement(self, advertisement: Advertisement) -> None:
+    def add_advertisement(self, advertisement: AdvertisementDto) -> None:
         with self.sessionmaker as session:
             try:
                 advertisement_orm = AdvertisementORM(
@@ -27,7 +27,7 @@ class AdvertisementSQLiteRepository:
         with self.sessionmaker as session:
             return session.execute(select(AdvertisementORM)).scalars().all()
 
-    def update_advertisement(self, advertisement: Advertisement) -> None:
+    def update_advertisement(self, advertisement: AdvertisementDto) -> None:
         with self.sessionmaker as session:
             try:
                 advertisement_orm = session.execute(
