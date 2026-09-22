@@ -11,3 +11,13 @@ wheels/
 
 # .env
 *.env
+
+#IDE/Editor
+*.idea
+*.zed
+
+#ruff
+.ruff_cache
+
+#db
+*.db
