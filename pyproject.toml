@@ -26,5 +26,6 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 
-[tool.pyright]
+[tool.basedpyright]
+typeCheckingMode = "standard"
 extraPaths = ["src"]

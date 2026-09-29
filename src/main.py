@@ -1,3 +1,5 @@
+import httpx
+
 from client import KufarClient
 from config import KUFAR_TOKEN
 from db import SessionFactory, init_db
@@ -34,11 +36,9 @@ def upsert_ads_and_show() -> None:
     if not KUFAR_TOKEN:
         print("Ошибка: задайте токен KUFAR_TOKEN в файле .env")
         return
-
-    with SessionFactory() as session:
-        repo = AdvertisementRepository(session)
-
-        with KufarClient(token=KUFAR_TOKEN) as client:
+    try:
+        with SessionFactory() as session, KufarClient(token=KUFAR_TOKEN) as client:
+            repo = AdvertisementRepository(session)
             print("Получаем список объявлений из Куфара...")
             items = client.get_my_items()
             print(f"Найдено объявлений в аккаунте: {len(items)}")
@@ -51,13 +51,17 @@ def upsert_ads_and_show() -> None:
                     print(f"Загружаем описание для: {item.title}...")
                     item.description = client.get_item_description(item.link)
                 _ = repo.upsert(item)
-
             session.commit()
             print("\nСинхронизация завершена успешно!")
 
-        # Показываем текущее состояние базы данных
-        all_ads = repo.get_all()
-        print_ads(all_ads)
+            all_ads = repo.get_all()
+            print_ads(all_ads)
+    except httpx.ConnectError:
+        print(
+            "Ошибка сети: не удалось подключиться",
+            "Возможно, у вас включен VPN. Попробуйте отключить его и попробовать снова",
+            sep="\n",
+        )
 
 
 def print_ads(ads: list[AdvertisementOrm]):
@@ -68,9 +72,9 @@ def print_ads(ads: list[AdvertisementOrm]):
             (ad.description[:60] + "...") if ad.description else "нет описания"
         )
         print(
-            f"[{ad.status.upper()}] {ad.title} — {ad.price} BYN\n",
-            f"  Спеки/описание: {desc_preview}\n",
-            f"  Ссылка: {ad.link}",
+            f"[{ad.status.upper()}] {ad.title} — {ad.price} BYN\n"
+            f"  Спеки/описание: {desc_preview}\n"
+            f"  Ссылка: {ad.link}"
         )
         print("-" * 60)
 
