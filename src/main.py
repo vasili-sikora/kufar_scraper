@@ -1,6 +1,7 @@
 from client import KufarClient
 from config import KUFAR_TOKEN
 from db import SessionFactory, init_db
+from models import AdvertisementOrm
 from repository import AdvertisementRepository
 
 
@@ -49,7 +50,7 @@ def upsert_ads_and_show() -> None:
                 elif item.link:
                     print(f"Загружаем описание для: {item.title}...")
                     item.description = client.get_item_description(item.link)
-                repo.upsert(item)
+                _ = repo.upsert(item)
 
             session.commit()
             print("\nСинхронизация завершена успешно!")
@@ -59,7 +60,7 @@ def upsert_ads_and_show() -> None:
         print_ads(all_ads)
 
 
-def print_ads(ads):
+def print_ads(ads: list[AdvertisementOrm]):
     print(f"\nВсего в архиве базы: {len(ads)} объявлений:")
     print("-" * 60)
     for ad in ads:
@@ -67,9 +68,9 @@ def print_ads(ads):
             (ad.description[:60] + "...") if ad.description else "нет описания"
         )
         print(
-            f"[{ad.status.upper()}] {ad.title} — {ad.price} BYN\n"
-            f"  Спеки/описание: {desc_preview}\n"
-            f"  Ссылка: {ad.link}"
+            f"[{ad.status.upper()}] {ad.title} — {ad.price} BYN\n",
+            f"  Спеки/описание: {desc_preview}\n",
+            f"  Ссылка: {ad.link}",
         )
         print("-" * 60)
 

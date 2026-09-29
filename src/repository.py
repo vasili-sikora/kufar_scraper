@@ -7,7 +7,7 @@ from schemas import AdvertisementItem
 
 class AdvertisementRepository:
     def __init__(self, session: Session):
-        self._session = session
+        self._session: Session = session
 
     def get_by_kufar_id(self, kufar_id: int) -> AdvertisementOrm | None:
         query = select(AdvertisementOrm).where(AdvertisementOrm.kufar_id == kufar_id)
