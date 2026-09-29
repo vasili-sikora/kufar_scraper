@@ -11,7 +11,7 @@ from schemas import AdvertisementItem
 
 class KufarClient:
     def __init__(self, token: str, base_url: str = "https://api.kufar.by"):
-        self.base_url = base_url.rstrip("/")
+        self._base_url = base_url.rstrip("/")
         self._session: httpx.Client = httpx.Client(
             headers={
                 "Authorization": token
@@ -29,7 +29,7 @@ class KufarClient:
         self._session.close()
 
     def get_my_items(self) -> list[AdvertisementItem]:
-        url = f"{self.base_url}/my-items-v2/v1/items"
+        url = f"{self._base_url}/my-items-v2/v1/items"
         response = self._session.get(url)
         response.raise_for_status()
 
@@ -64,7 +64,7 @@ class KufarClient:
             return ""
 
         try:
-            sleep(uniform(1.2, 2.5))
+            sleep(uniform(1.0, 2.0))
             response = self._session.get(item_url)
             response.raise_for_status()
             page_html = response.text
