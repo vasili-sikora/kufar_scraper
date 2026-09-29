@@ -44,10 +44,7 @@ def upsert_ads_and_show() -> None:
             print(f"Найдено объявлений в аккаунте: {len(items)}")
 
             for item in items:
-                existing = repo.get_by_kufar_id(item.kufar_id)
-                if existing and existing.description:
-                    item.description = existing.description
-                elif item.link:
+                if item.link:
                     print(f"Загружаем описание для: {item.title}...")
                     item.description = client.get_item_description(item.link)
                 _ = repo.upsert(item)
