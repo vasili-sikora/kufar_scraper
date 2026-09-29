@@ -19,5 +19,9 @@ wheels/
 #ruff
 .ruff_cache
 
-#db
+#data
+/data
+
+#db and excel
 *.db
+*.xlsx

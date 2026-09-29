@@ -3,6 +3,7 @@ import httpx
 from client import KufarClient
 from config import KUFAR_TOKEN
 from db import SessionFactory, init_db
+from exporter import export_to_excel
 from models import AdvertisementOrm
 from repository import AdvertisementRepository
 
@@ -11,9 +12,10 @@ def choose_option() -> str:
     print("Выберите действие:")
     print("1. Синхронизировать объявления")
     print("2. Показать объявления из базы")
-    print("3. Выход")
+    print("3. Экспортировать в Excel")
+    print("q. Выход")
 
-    choice = input("Введите номер действия: ")
+    choice = input("Выберите действие: ")
     return choice
 
 
@@ -27,12 +29,26 @@ def main() -> None:
         elif choice == "2":
             print_from_db()
         elif choice == "3":
+            save_to_excel()
+        elif choice == "q":
             break
         else:
             print("Неверный выбор, попробуйте снова.")
 
 
+def get_all_ads_from_db() -> list[AdvertisementOrm]:
+    with SessionFactory() as session:
+        repo = AdvertisementRepository(session)
+        return repo.get_all()
+
+
 def upsert_ads_and_show() -> None:
+    sync_ads_in_db()
+    ads = get_all_ads_from_db()
+    print_ads(ads)
+
+
+def sync_ads_in_db() -> None:
     if not KUFAR_TOKEN:
         print("Ошибка: задайте токен KUFAR_TOKEN в файле .env")
         return
@@ -50,9 +66,6 @@ def upsert_ads_and_show() -> None:
                 _ = repo.upsert(item)
             session.commit()
             print("\nСинхронизация завершена успешно!")
-
-            all_ads = repo.get_all()
-            print_ads(all_ads)
     except httpx.ConnectError:
         print(
             "Ошибка сети: не удалось подключиться",
@@ -81,10 +94,15 @@ def print_ads(ads: list[AdvertisementOrm]):
 
 
 def print_from_db():
-    with SessionFactory() as session:
-        repo = AdvertisementRepository(session)
-        ads = repo.get_all()
-        print_ads(ads)
+    ads = get_all_ads_from_db()
+    print_ads(ads)
+
+
+def save_to_excel():
+    sync_ads_in_db()
+    ads = get_all_ads_from_db()
+    export_to_excel(ads)
+    print("Файл успешно создан!")
 
 
 if __name__ == "__main__":
