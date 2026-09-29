@@ -62,6 +62,10 @@ def upsert_ads_and_show() -> None:
             "Возможно, у вас включен VPN. Попробуйте отключить его и попробовать снова",
             sep="\n",
         )
+    except httpx.HTTPStatusError as e:
+        print(f"Ошибка куфара: {e}")
+    except httpx.HTTPError as e:
+        print(f"Ошибка: {e}")
 
 
 def print_ads(ads: list[AdvertisementOrm]):
