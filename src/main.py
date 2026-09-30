@@ -7,6 +7,7 @@ from exporter import export_to_excel
 from models import AdvertisementOrm
 from parser import ItemHtmlParser
 from repository import AdvertisementRepository
+from schemas import AdvertisementItem
 
 
 def choose_option() -> str:
@@ -46,7 +47,7 @@ def get_all_ads_from_db() -> list[AdvertisementOrm]:
 def upsert_ads_and_show() -> None:
     sync_ads_in_db()
     ads = get_all_ads_from_db()
-    print_ads(ads)
+    print_ads([AdvertisementItem.from_orm(ad) for ad in ads])
 
 
 def sync_ads_in_db() -> None:
@@ -80,24 +81,17 @@ def sync_ads_in_db() -> None:
         print(f"Ошибка: {e}")
 
 
-def print_ads(ads: list[AdvertisementOrm]):
+def print_ads(ads: list[AdvertisementItem]):
     print(f"\nВсего в архиве базы: {len(ads)} объявлений:")
     print("-" * 60)
     for ad in ads:
-        desc_preview = (
-            (ad.description[:60] + "...") if ad.description else "нет описания"
-        )
-        print(
-            f"[{ad.status.upper()}] {ad.title} — {ad.price} BYN\n"
-            f"  Спеки/описание: {desc_preview}\n"
-            f"  Ссылка: {ad.link}"
-        )
+        print(ad)
         print("-" * 60)
 
 
 def print_from_db():
     ads = get_all_ads_from_db()
-    print_ads(ads)
+    print_ads([AdvertisementItem.from_orm(ad) for ad in ads])
 
 
 def save_to_excel():

@@ -9,5 +9,5 @@ SessionFactory = sessionmaker(bind=engine)
 
 
 def init_db() -> None:
-    """Создаёт таблицы в базе данных, если их ещё нет."""
+    """Create tables in DB, if they not exists"""
     Base.metadata.create_all(engine)
