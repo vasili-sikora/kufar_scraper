@@ -10,8 +10,7 @@ class AdvertisementRepository:
         self._session: Session = session
 
     def get_by_kufar_id(self, kufar_id: int) -> AdvertisementOrm | None:
-        query = select(AdvertisementOrm).where(AdvertisementOrm.kufar_id == kufar_id)
-        return self._session.scalars(query).one_or_none()
+        return self._session.get(AdvertisementOrm, kufar_id)
 
     def upsert(self, item: AdvertisementItem) -> AdvertisementOrm:
         ad_orm = self.get_by_kufar_id(item.kufar_id)

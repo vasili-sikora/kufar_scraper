@@ -10,8 +10,7 @@ class Base(DeclarativeBase): ...
 class AdvertisementOrm(Base):
     __tablename__: str = "advertisements"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    kufar_id: Mapped[int] = mapped_column(unique=True, index=True)
+    kufar_id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column()
     description: Mapped[str | None] = mapped_column()
     price: Mapped[float] = mapped_column()

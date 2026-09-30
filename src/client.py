@@ -58,8 +58,16 @@ class KufarClient:
         return parsed_items
 
     def get_item_page_html(self, item_url) -> str:
+        if not item_url:
+            return ""
+
         sleep(uniform(0.8, 1.8))
-        response = self._session.get(item_url)
-        response.raise_for_status()
-        page_html = response.text
-        return page_html
+        try:
+            response = self._session.get(item_url)
+            response.raise_for_status()
+            page_html = response.text
+            return page_html
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return ""
+            raise
