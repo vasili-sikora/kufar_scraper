@@ -1,5 +1,3 @@
-import html
-import re
 from datetime import UTC, datetime
 from random import uniform
 from time import sleep
@@ -59,30 +57,9 @@ class KufarClient:
 
         return parsed_items
 
-    def get_item_description(self, item_url: str) -> str:
-        if not item_url:
-            return ""
-
-        try:
-            sleep(uniform(1.0, 2.0))
-            response = self._session.get(item_url)
-            response.raise_for_status()
-            page_html = response.text
-
-            match = re.search(
-                r'item[Pp]rop=["\']description["\'][^>]*>(.*?)</div>',
-                page_html,
-                re.DOTALL,
-            )
-            if not match:
-                return ""
-
-            raw_text = match.group(1)
-            text_with_newlines = re.sub(r"<br\s*/?>|</p>", "\n", raw_text)
-            clean_text = re.sub(r"<[^>]+>", "", text_with_newlines)
-            decoded_text = html.unescape(clean_text)
-
-            return decoded_text.strip()
-        except httpx.HTTPError as e:
-            print(f"Не удалось получить описание для {item_url}: {e}")
-            return ""
+    def get_item_page_html(self, item_url) -> str:
+        sleep(uniform(0.8, 1.8))
+        response = self._session.get(item_url)
+        response.raise_for_status()
+        page_html = response.text
+        return page_html

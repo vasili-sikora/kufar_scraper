@@ -5,6 +5,7 @@ from config import KUFAR_TOKEN
 from db import SessionFactory, init_db
 from exporter import export_to_excel
 from models import AdvertisementOrm
+from parser import ItemHtmlParser
 from repository import AdvertisementRepository
 
 
@@ -62,7 +63,8 @@ def sync_ads_in_db() -> None:
             for item in items:
                 if item.link:
                     print(f"Загружаем описание для: {item.title}...")
-                    item.description = client.get_item_description(item.link)
+                    page_html = client.get_item_page_html(item.link)
+                    item.description = ItemHtmlParser(page_html).get_item_description()
                 _ = repo.upsert(item)
             session.commit()
             print("\nСинхронизация завершена успешно!")
