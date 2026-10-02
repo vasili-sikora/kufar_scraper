@@ -45,6 +45,7 @@ class ItemHtmlParser:
         return decoded_text.strip() or None
 
     def get_item_description(self) -> str:
+        """Returns item description or "" if None"""
         return (
             self._get_item_description_from_next_data()
             or self._get_description_from_itemprop()

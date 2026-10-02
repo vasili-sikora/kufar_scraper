@@ -4,11 +4,14 @@ from time import sleep
 
 import httpx
 
+from config import KUFAR_TOKEN
 from schemas import AdvertisementItem
 
 
 class KufarClient:
-    def __init__(self, token: str, base_url: str = "https://api.kufar.by"):
+    def __init__(
+        self, token: str = KUFAR_TOKEN, base_url: str = "https://api.kufar.by"
+    ):
         self._base_url = base_url.rstrip("/")
         self._session: httpx.Client = httpx.Client(
             headers={
@@ -57,7 +60,7 @@ class KufarClient:
 
         return parsed_items
 
-    def get_item_page_html(self, item_url) -> str:
+    def get_item_page_html(self, item_url: str) -> str:
         if not item_url:
             return ""
 
