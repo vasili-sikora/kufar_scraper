@@ -4,12 +4,12 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
 from config import DATA_DIR
-from models import AdvertisementOrm
+from schemas import AdvertisementItem
 
 EXCEL_PATH = DATA_DIR / "advertisements.xlsx"
 
 
-def export_to_excel(ads: list[AdvertisementOrm], filepath: Path = EXCEL_PATH) -> Path:
+def export_to_excel(ads: list[AdvertisementItem], filepath: Path = EXCEL_PATH) -> Path:
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
     wb = Workbook()
