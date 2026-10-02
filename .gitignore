@@ -25,3 +25,9 @@ wheels/
 #db and excel
 *.db
 *.xlsx
+
+# Pytest
+*.pytest_cache
+
+# TODO
+TODO.*

@@ -9,7 +9,7 @@ from alembic import context
 # Ensure src is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from config import DB_URL
-from models import AdvertisementOrm, Base
+from models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
