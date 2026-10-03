@@ -47,7 +47,7 @@ def main() -> None:
         else:
             print("Неверный выбор, попробуйте снова.")
 
-        input("\n Нажмите Enter чтобы вернуться в меню...")
+        input("\nНажмите Enter чтобы вернуться в меню...")
 
 
 def sync_ads_and_show() -> None:
@@ -55,12 +55,13 @@ def sync_ads_and_show() -> None:
         print("KUFAR_TOKEN не указан в .env! Укажите его и попробуйте снова")
         return
     try:
-        with SessionFactory.begin() as session, KufarClient() as client:
+        with SessionFactory.begin() as session, KufarClient(timeout=60) as client:
             repo = AdvertisementRepository(session)
             service = KufarService(repo)
 
             print("Синхронизируем объявления в базе...")
             service.sync_ads_to_db(client)
+            print("Успешно синхронизировано!")
             ads = service.get_all_ads_from_db()
         _print_ads(ads)
     except KufarScrapperException as e:
@@ -99,6 +100,7 @@ def save_to_excel():
         with SessionFactory.begin() as session, KufarClient() as client:
             repo = AdvertisementRepository(session)
             service = KufarService(repo)
+            print("Синхронизируем объявления в базе и создаём отчёт...")
             excel_path = service.save_to_excel(client)
         print(f"Файл с отчётом создан: {excel_path}")
     except KufarScrapperException as e:
