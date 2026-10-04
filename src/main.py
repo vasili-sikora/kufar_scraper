@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -23,7 +24,7 @@ def choose_option() -> str:
 
 
 def clear_console() -> None:
-    os.system("cls" if os.name == "nt" else "clear")
+    subprocess.run("cls" if os.name == "nt" else "clear", check=True)
 
 
 def main() -> None:

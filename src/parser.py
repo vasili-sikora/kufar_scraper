@@ -19,10 +19,7 @@ class ItemHtmlParser:
         try:
             payload = json.loads(match.group(1))
             ad_data = (
-                payload.get("props", {})
-                .get("initialState", {})
-                .get("adView", {})
-                .get("data", {})
+                payload.get("props", {}).get("initialState", {}).get("adView", {}).get("data", {})
             )
             desc = ad_data.get("body") or ad_data.get("description")
             return desc.strip() if desc else None
