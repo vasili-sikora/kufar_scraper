@@ -1,35 +1,12 @@
 from datetime import UTC, datetime
 
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from models import Base
 from repository import AdvertisementRepository
 from schemas import AdvertisementItem
 
 
-@pytest.fixture
-def db_session():
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-
-    session_factory = sessionmaker(engine)
-    session = session_factory()
-
-    yield session
-
-    session.close()
-
-
-@pytest.fixture
-def repository(db_session: Session):
-    return AdvertisementRepository(db_session)
-
-
-def test_upsert_creates_new_ad(
-    repository: AdvertisementRepository, db_session: Session
-):
+def test_upsert_creates_new_ad(repository: AdvertisementRepository, db_session: Session):
     item = AdvertisementItem(
         kufar_id=12345,
         title="Компьютер супер крутой лютый",
@@ -52,9 +29,7 @@ def test_upsert_creates_new_ad(
     assert saved.description == item.description
 
 
-def test_upsert_updates_existing(
-    repository: AdvertisementRepository, db_session: Session
-):
+def test_upsert_updates_existing(repository: AdvertisementRepository, db_session: Session):
     item = AdvertisementItem(
         kufar_id=12345,
         title="Компьютер супер крутой лютый",

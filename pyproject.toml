@@ -34,7 +34,13 @@ extraPaths = ["src"]
 
 [tool.ruff]
 line-length = 100
+target-version = "py314"
 src = ["src"]
 
 [tool.ruff.lint]
 extend-select = ["I", "UP", "B", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

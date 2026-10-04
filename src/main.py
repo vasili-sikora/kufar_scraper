@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from client import KufarClient
 from config import KUFAR_TOKEN
 from db import SessionFactory, init_db
-from exceptions import KufarScrapperException
+from exceptions import KufarScraperError
 from repository import AdvertisementRepository
 from schemas import AdvertisementItem
 from service import KufarService
@@ -64,7 +64,7 @@ def sync_ads_and_show() -> None:
             service.sync_ads_to_db(client)
             ads = service.get_all_ads_from_db()
         _print_ads(ads)
-    except KufarScrapperException as e:
+    except KufarScraperError as e:
         print(e)
         return
     except SQLAlchemyError:
@@ -88,21 +88,19 @@ def print_from_db():
 
             ads = service.get_all_ads_from_db()
             _print_ads(ads)
-    except KufarScrapperException as e:
+    except KufarScraperError as e:
         print(e)
 
 
 def save_to_excel():
-    if not KUFAR_TOKEN:
-        print("KUFAR_TOKEN не указан в .env! Укажите его и попробуйте снова")
-        return
     try:
         with SessionFactory.begin() as session, KufarClient() as client:
             repo = AdvertisementRepository(session)
             service = KufarService(repo)
-            excel_path = service.save_to_excel(client)
+            service.sync_ads_to_db(client)
+            excel_path = service.save_to_excel()
         print(f"Файл с отчётом создан: {excel_path}")
-    except KufarScrapperException as e:
+    except KufarScraperError as e:
         print(e)
     except SQLAlchemyError:
         print("Ошибка базы данных...")
