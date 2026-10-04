@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from config import DATA_DIR
 from exceptions import KufarApiError, KufarScrapperException
 from exporter import export_to_excel
+from logger import log
 from parser import ItemHtmlParser
 from schemas import AdvertisementItem
 
@@ -16,6 +17,7 @@ class KufarService:
     def __init__(self, repository):
         self._repository = repository
 
+    @log
     def sync_ads_to_db(self, client) -> None:
         try:
             ads = client.get_my_items()
@@ -28,6 +30,7 @@ class KufarService:
         except httpx.HTTPError as e:
             raise KufarApiError("Не удалось загрузить объявления") from e
 
+    @log
     def get_all_ads_from_db(self) -> list[AdvertisementItem]:
         try:
             ads = self._repository.get_all()
@@ -35,6 +38,7 @@ class KufarService:
         except SQLAlchemyError as e:
             raise KufarScrapperException("Не удалось получить объявления из базы") from e
 
+    @log
     def save_to_excel(self, client) -> Path:
         try:
             self.sync_ads_to_db(client)
