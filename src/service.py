@@ -7,13 +7,13 @@ from config import DATA_DIR
 from exceptions import KufarApiError, KufarScrapperException
 from exporter import export_to_excel
 from logger import log
-from parser import ItemHtmlParser
+from parser import AdvertisementHtmlParser
 from schemas import AdvertisementItem
 
 EXCEL_PATH = DATA_DIR / "advertisements.xlsx"
 
 
-class KufarService:
+class AdvertisementService:
     def __init__(self, repository):
         self._repository = repository
 
@@ -25,7 +25,7 @@ class KufarService:
             for ad in ads:
                 if ad.link:
                     ad_html = client.get_item_page_html(ad.link)
-                    ad.description = ItemHtmlParser(ad_html).get_item_description()
+                    ad.description = AdvertisementHtmlParser(ad_html).get_item_description()
                 self._repository.upsert(ad)
         except httpx.HTTPError as e:
             raise KufarApiError("Не удалось загрузить объявления") from e
