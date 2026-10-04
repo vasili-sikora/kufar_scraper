@@ -100,6 +100,7 @@ def test_save_to_excel(
     assert test_filepath.exists()
 
 
+# TODO: Make this unit tests instead of integration with excel exporter mock
 def test_save_to_excel_throws_exception_on_db_error(
     service_w_mock_repo: KufarService, mock_repository: MagicMock, tmp_path: Path
 ):
