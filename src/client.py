@@ -1,3 +1,4 @@
+from datetime import datetime
 from random import uniform
 from time import sleep
 
@@ -35,14 +36,10 @@ class KufarClient:
         data = response.json()
         ads_raw = data.get("ads", [])
 
-        if not ads_raw:
-            raise ValueError("Не удалось получить ни одного объявления")
-
         parsed_items: list[AdvertisementItem] = []
         for ad in ads_raw:
-            price_raw = ad.get("price_byn", "0")
-            price = round(int(price_raw) / 100.0, 2) if price_raw.isdigit() else 0.0
-
+            price = round(int(ad["price_byn"]) / 100.0, 2)
+            date = datetime.fromisoformat(ad["date"])
             parsed_items.append(
                 AdvertisementItem(
                     kufar_id=int(ad["ad_id"]),
@@ -50,7 +47,7 @@ class KufarClient:
                     price=price,
                     status=ad["ad_status"],
                     link=ad["link"],
-                    published_at=ad["date"],
+                    published_at=date,
                 )
             )
 
@@ -60,7 +57,7 @@ class KufarClient:
         if not item_url:
             return ""
 
-        sleep(uniform(0.8, 1.8))
+        sleep(uniform(0.7, 1.5))
         try:
             response = self._session.get(item_url)
             response.raise_for_status()

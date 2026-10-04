@@ -55,7 +55,7 @@ def sync_ads_and_show() -> None:
         print("KUFAR_TOKEN не указан в .env! Укажите его и попробуйте снова")
         return
     try:
-        with SessionFactory.begin() as session, KufarClient(timeout=60) as client:
+        with SessionFactory.begin() as session, KufarClient() as client:
             repo = AdvertisementRepository(session)
             service = KufarService(repo)
 
