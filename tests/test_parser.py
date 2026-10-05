@@ -1,4 +1,4 @@
-from parser import ItemHtmlParser
+from parser import AdvertisementHtmlParser
 
 
 def test_parser_extracts_description_from_next_data():
@@ -22,7 +22,7 @@ def test_parser_extracts_description_from_next_data():
     </body>
     </html>
     """
-    parser = ItemHtmlParser(html_content)
+    parser = AdvertisementHtmlParser(html_content)
     result = parser.get_item_description()
 
     assert result == "Процессор Ryzen 5 5600\nВидеокарта RTX 3060\nОЗУ 16GB"
@@ -38,7 +38,7 @@ def test_parser_fallbacks_to_itemprop_when_next_data_missing():
         </body>
     </html>
     """
-    parser = ItemHtmlParser(html_content)
+    parser = AdvertisementHtmlParser(html_content)
     result = parser.get_item_description()
 
     assert result == "Игровой ПК в идеале.\nТорг уместен & обмен."
@@ -46,7 +46,7 @@ def test_parser_fallbacks_to_itemprop_when_next_data_missing():
 
 def test_parser_returns_empty_string_when_no_description():
     html_content = "<html><body><h1>Страница без описания</h1></body></html>"
-    parser = ItemHtmlParser(html_content)
+    parser = AdvertisementHtmlParser(html_content)
     result = parser.get_item_description()
 
     assert result == ""
