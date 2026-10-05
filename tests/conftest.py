@@ -54,24 +54,24 @@ def item() -> AdvertisementItem:
 
 
 @pytest.fixture
-def mock_repository() -> MagicMock[AdvertisementRepository]:
+def mock_repository() -> MagicMock:
     mock_repository = MagicMock(spec=AdvertisementRepository)
     return mock_repository
 
 
 @pytest.fixture
-def mock_client() -> MagicMock[KufarClient]:
+def mock_client() -> MagicMock:
     mock_client = MagicMock(spec=KufarClient)
     return mock_client
 
 
 @pytest.fixture
-def mock_service() -> MagicMock[KufarService]:
+def mock_service() -> MagicMock:
     mock_service = MagicMock(spec=KufarService)
     return mock_service
 
 
 @pytest.fixture
-def service_w_mock_repo(mock_repository: MagicMock[AdvertisementRepository]):
+def service_w_mock_repo(mock_repository: MagicMock):
     service = KufarService(mock_repository)
     return service

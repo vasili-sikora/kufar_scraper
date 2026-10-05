@@ -7,18 +7,18 @@ import httpx
 from config import KUFAR_TOKEN
 from schemas import AdvertisementItem
 
+KUFAR_URL = "https://api.kufar.by"
+MY_ITEMS_URL = "my-items-v2/v1/items"
+
 
 class KufarClient:
     def __init__(
-        self, token: str = KUFAR_TOKEN, base_url: str = "https://api.kufar.by"
+        self,
+        token: str = KUFAR_TOKEN,
+        session: httpx.Client = None,
     ):
-        self._base_url = base_url.rstrip("/")
-        self._session: httpx.Client = httpx.Client(
-            headers={
-                "Authorization": token
-                if token.startswith("Bearer ")
-                else f"Bearer {token}"
-            },
+        self._session: httpx.Client = session or httpx.Client(
+            headers={"Authorization": token if token.startswith("Bearer ") else f"Bearer {token}"},
             timeout=15,
             follow_redirects=True,
         )
@@ -30,7 +30,7 @@ class KufarClient:
         self._session.close()
 
     def get_my_items(self) -> list[AdvertisementItem]:
-        url = f"{self._base_url}/my-items-v2/v1/items"
+        url = f"{KUFAR_URL}/{MY_ITEMS_URL}"
         response = self._session.get(url)
         response.raise_for_status()
 
@@ -43,9 +43,7 @@ class KufarClient:
             price = round(int(price_raw) / 100.0, 2) if price_raw.isdigit() else 0.0
 
             raw_date = ad.get("list_time") or ad.get("start_time")
-            pub_date = (
-                datetime.fromisoformat(raw_date) if raw_date else datetime.now(tz=UTC)
-            )
+            pub_date = datetime.fromisoformat(raw_date) if raw_date else datetime.now(tz=UTC)
 
             parsed_items.append(
                 AdvertisementItem(
