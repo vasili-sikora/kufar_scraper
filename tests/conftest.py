@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from client import KufarClient
 from models import Base
 from repository import AdvertisementRepository
-from schemas import AdvertisementDto
+from schemas import AdvertisementDto, AdvertisementHistoryDto
 from service import AdvertisementService
 
 
@@ -40,7 +40,7 @@ def service(repository: AdvertisementRepository) -> AdvertisementService:
 
 
 @pytest.fixture
-def item() -> AdvertisementDto:
+def advertisement() -> AdvertisementDto:
     item = AdvertisementDto(
         kufar_id=12345,
         title="Компьютер супер крутой лютый",
@@ -75,3 +75,16 @@ def mock_service() -> MagicMock:
 def service_w_mock_repo(mock_repository: MagicMock) -> AdvertisementService:
     service = AdvertisementService(mock_repository)
     return service
+
+
+@pytest.fixture
+def adv_history(advertisement: AdvertisementDto) -> AdvertisementHistoryDto:
+    adv_history = AdvertisementHistoryDto(
+        id=1,
+        kufar_id=advertisement.kufar_id,
+        field_name="title",
+        old_value="old",
+        new_value="new",
+        changed_at=datetime(2026, 9, 1, 12, 0, tzinfo=UTC),
+    )
+    return adv_history

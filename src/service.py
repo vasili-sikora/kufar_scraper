@@ -45,7 +45,13 @@ class AdvertisementService:
     def save_to_excel(self, filepath: Path = EXCEL_PATH) -> Path:
         try:
             ads = self.get_all_ads_from_db()
-            excel_path = export_to_excel(ads, filepath)
+            ads_history_orm = self._repository.get_all_history()
+            ads_history = [AdvertisementHistoryDto.from_orm(a) for a in ads_history_orm]
+            excel_path = export_to_excel(
+                ads=ads,
+                ads_history=ads_history,
+                filepath=filepath,
+            )
             return excel_path
         except SQLAlchemyError as e:
             raise KufarScraperDatabaseError() from e

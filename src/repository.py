@@ -66,3 +66,7 @@ class AdvertisementRepository:
             .order_by(AdvertisementHistoryOrm.changed_at.desc())
         )
         return list(self._session.scalars(query).all())
+
+    def get_all_history(self) -> list[AdvertisementHistoryOrm]:
+        query = select(AdvertisementHistoryOrm).order_by(AdvertisementHistoryOrm.changed_at.desc())
+        return list(self._session.scalars(query).all())

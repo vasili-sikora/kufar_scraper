@@ -81,34 +81,38 @@ def test_description_not_deleted_on_status_change(
     assert updated.description == "8 ядер, 16 ГБ ОЗУ"
 
 
-def test_new_ad_not_create_history(repository: AdvertisementRepository, item: AdvertisementDto):
-    _ = repository.upsert(item)
+def test_new_ad_not_create_history(
+    repository: AdvertisementRepository, advertisement: AdvertisementDto
+):
+    _ = repository.upsert(advertisement)
 
-    assert repository.get_history(item.kufar_id) == []
-    assert repository.get_by_kufar_id(item.kufar_id) is not None
+    assert repository.get_history(advertisement.kufar_id) == []
+    assert repository.get_by_kufar_id(advertisement.kufar_id) is not None
 
 
-def test_updating_ad_create_history(repository: AdvertisementRepository, item: AdvertisementDto):
-    _ = repository.upsert(item)
+def test_updating_ad_create_history(
+    repository: AdvertisementRepository, advertisement: AdvertisementDto
+):
+    _ = repository.upsert(advertisement)
 
-    updated_item = copy.copy(item)
+    updated_item = copy.copy(advertisement)
     updated_item.title = "new_title"
 
     _ = repository.upsert(updated_item)
 
-    history = repository.get_history(item.kufar_id)
+    history = repository.get_history(advertisement.kufar_id)
     assert len(history) == 1
-    assert history[0].kufar_id == item.kufar_id
+    assert history[0].kufar_id == advertisement.kufar_id
     assert history[0].field_name == "title"
-    assert history[0].old_value == item.title
+    assert history[0].old_value == advertisement.title
     assert history[0].new_value == "new_title"
 
 
 def test_upsert_not_create_history_if_nothing_changed(
-    repository: AdvertisementRepository, item: AdvertisementDto
+    repository: AdvertisementRepository, advertisement: AdvertisementDto
 ):
-    _ = repository.upsert(item)
-    _ = repository.upsert(item)
+    _ = repository.upsert(advertisement)
+    _ = repository.upsert(advertisement)
 
-    history = repository.get_history(item.kufar_id)
+    history = repository.get_history(advertisement.kufar_id)
     assert history == []
