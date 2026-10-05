@@ -5,7 +5,7 @@ from config import DB_URL
 from models import Base
 
 engine = create_engine(DB_URL)
-SessionFactory = sessionmaker(bind=engine)
+session_factory = sessionmaker(bind=engine)
 
 
 def init_db() -> None:

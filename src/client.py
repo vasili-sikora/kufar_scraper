@@ -5,7 +5,7 @@ from time import sleep
 import httpx
 
 from config import KUFAR_TOKEN
-from schemas import AdvertisementItem
+from schemas import AdvertisementDto
 
 KUFAR_URL = "https://api.kufar.by"
 MY_ITEMS_URL = "my-items-v2/v1/items"
@@ -32,7 +32,7 @@ class KufarClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._session.close()
 
-    def get_my_items(self) -> list[AdvertisementItem]:
+    def get_my_items(self) -> list[AdvertisementDto]:
         url = f"{self._base_url}/{MY_ITEMS_URL.lstrip('/')}"
         response = self._session.get(url)
         response.raise_for_status()
@@ -40,7 +40,7 @@ class KufarClient:
         data = response.json()
         ads_raw = data.get("ads", [])
 
-        parsed_items: list[AdvertisementItem] = []
+        parsed_items: list[AdvertisementDto] = []
         for ad in ads_raw:
             price_raw = ad.get("price_byn", "0")
             price = round(int(price_raw) / 100.0, 2) if str(price_raw).isdigit() else 0.0
@@ -49,7 +49,7 @@ class KufarClient:
             pub_date = datetime.fromisoformat(raw_date) if raw_date else datetime.now(tz=UTC)
 
             parsed_items.append(
-                AdvertisementItem(
+                AdvertisementDto(
                     kufar_id=int(ad["ad_id"]),
                     title=ad["subject"],
                     price=price,

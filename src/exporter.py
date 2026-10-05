@@ -4,12 +4,12 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
 from config import DATA_DIR
-from schemas import AdvertisementItem
+from schemas import AdvertisementDto
 
 EXCEL_PATH = DATA_DIR / "advertisements.xlsx"
 
 
-def export_to_excel(ads: list[AdvertisementItem], filepath: Path = EXCEL_PATH) -> Path:
+def export_to_excel(ads: list[AdvertisementDto], filepath: Path = EXCEL_PATH) -> Path:
     if not ads:
         raise ValueError("Ads list is empty!")
     if not filepath or not filepath.name:

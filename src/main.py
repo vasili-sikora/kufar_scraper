@@ -5,10 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from client import KufarClient
 from config import KUFAR_TOKEN
-from db import SessionFactory, init_db
+from db import init_db, session_factory
 from exceptions import KufarScraperError
 from repository import AdvertisementRepository
-from schemas import AdvertisementItem
+from schemas import AdvertisementDto
 from service import AdvertisementService
 
 
@@ -17,6 +17,7 @@ def choose_option() -> str:
     print("1. Синхронизировать объявления")
     print("2. Показать объявления из базы")
     print("3. Экспортировать в Excel")
+    print("4. Посмотреть историю объявления")
     print("q. Выход")
 
     choice = input("Выберите действие: ")
@@ -45,10 +46,33 @@ def main() -> None:
             print_from_db()
         elif choice == "3":
             save_to_excel()
+        elif choice == "4":
+            show_advertisement_history()
         else:
             print("Неверный выбор, попробуйте снова.")
 
-        input("\n Нажмите Enter чтобы вернуться в меню...")
+        input("\nНажмите Enter чтобы вернуться в меню...")
+
+
+def show_advertisement_history():
+    try:
+        with session_factory.begin() as session:
+            repo = AdvertisementRepository(session)
+            service = AdvertisementService(repo)
+
+            kufar_id = input("Введите id объявления: ")
+            if not kufar_id.isdigit():
+                print("ID объявления должно быть числом!")
+                return
+
+            ad_history = service.get_advertisement_history(advertisement_id=int(kufar_id))
+            if not ad_history:
+                print("История данного объявления пуста")
+                return
+            for snapshot in ad_history:
+                print(snapshot)
+    except KufarScraperError as e:
+        print(e)
 
 
 def sync_ads_and_show() -> None:
@@ -56,7 +80,7 @@ def sync_ads_and_show() -> None:
         print("KUFAR_TOKEN не указан в .env! Укажите его и попробуйте снова")
         return
     try:
-        with SessionFactory.begin() as session, KufarClient() as client:
+        with session_factory.begin() as session, KufarClient() as client:
             repo = AdvertisementRepository(session)
             service = AdvertisementService(repo)
 
@@ -73,7 +97,7 @@ def sync_ads_and_show() -> None:
         return
 
 
-def _print_ads(ads: list[AdvertisementItem]):
+def _print_ads(ads: list[AdvertisementDto]):
     print(f"\nВсего в архиве базы: {len(ads)} объявлений:")
     print("-" * 60)
     for ad in ads:
@@ -83,7 +107,7 @@ def _print_ads(ads: list[AdvertisementItem]):
 
 def print_from_db():
     try:
-        with SessionFactory.begin() as session:
+        with session_factory.begin() as session:
             repo = AdvertisementRepository(session)
             service = AdvertisementService(repo)
 
@@ -95,7 +119,7 @@ def print_from_db():
 
 def save_to_excel():
     try:
-        with SessionFactory.begin() as session, KufarClient() as client:
+        with session_factory.begin() as session, KufarClient() as client:
             repo = AdvertisementRepository(session)
             service = AdvertisementService(repo)
             print("Синхронизируем объявления в базе и создаём отчёт...")

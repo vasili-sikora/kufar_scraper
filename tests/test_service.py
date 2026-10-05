@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 from exceptions import KufarScraperDatabaseError, KufarScraperError, KufarScraperNetworkError
-from schemas import AdvertisementItem
+from schemas import AdvertisementDto
 from service import AdvertisementService
 
 
@@ -18,7 +18,7 @@ def test_get_all_ads_return_empty_list_when_no_ads(service: AdvertisementService
 def test_get_all_return_non_empty_list(
     mock_repository: MagicMock,
     service_w_mock_repo: AdvertisementService,
-    item: AdvertisementItem,
+    item: AdvertisementDto,
 ):
     mock_repository.get_all.return_value = [item]
     ads = service_w_mock_repo.get_all_ads_from_db()
@@ -40,7 +40,7 @@ def test_get_all_throws_exception_on_db_error(mock_repository: MagicMock):
 def test_sync_ads_to_db_success(
     service_w_mock_repo: AdvertisementService,
     mock_repository: MagicMock,
-    item: AdvertisementItem,
+    item: AdvertisementDto,
     mock_client: MagicMock,
 ):
     mock_client.get_my_items.return_value = [item]
@@ -75,7 +75,7 @@ def test_sync_ads_to_db_throws_exception_on_db_error(
     service_w_mock_repo: AdvertisementService,
     mock_repository: MagicMock,
     mock_client: MagicMock,
-    item: AdvertisementItem,
+    item: AdvertisementDto,
 ):
     mock_repository.upsert.side_effect = SQLAlchemyError("Database error")
     mock_client.get_my_items.return_value = [item]
@@ -87,7 +87,7 @@ def test_sync_ads_to_db_throws_exception_on_db_error(
 def test_save_to_excel(
     service_w_mock_repo: AdvertisementService,
     mock_repository: MagicMock,
-    item: AdvertisementItem,
+    item: AdvertisementDto,
     tmp_path: Path,
 ):
     mock_repository.get_all.return_value = [item]

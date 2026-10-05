@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from client import KufarClient
 from models import Base
 from repository import AdvertisementRepository
-from schemas import AdvertisementItem
+from schemas import AdvertisementDto
 from service import AdvertisementService
 
 
@@ -40,8 +40,8 @@ def service(repository: AdvertisementRepository) -> AdvertisementService:
 
 
 @pytest.fixture
-def item() -> AdvertisementItem:
-    item = AdvertisementItem(
+def item() -> AdvertisementDto:
+    item = AdvertisementDto(
         kufar_id=12345,
         title="Компьютер супер крутой лютый",
         price=1500.0,

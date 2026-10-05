@@ -8,13 +8,14 @@ from exceptions import KufarScraperDatabaseError, KufarScraperError, KufarScrape
 from exporter import export_to_excel
 from logger import log
 from parser import AdvertisementHtmlParser
-from schemas import AdvertisementItem
+from repository import AdvertisementRepository
+from schemas import AdvertisementDto, AdvertisementHistoryDto
 
 EXCEL_PATH = DATA_DIR / "advertisements.xlsx"
 
 
 class AdvertisementService:
-    def __init__(self, repository):
+    def __init__(self, repository: AdvertisementRepository):
         self._repository = repository
 
     @log
@@ -33,10 +34,10 @@ class AdvertisementService:
             raise KufarScraperDatabaseError() from e
 
     @log
-    def get_all_ads_from_db(self) -> list[AdvertisementItem]:
+    def get_all_ads_from_db(self) -> list[AdvertisementDto]:
         try:
             ads = self._repository.get_all()
-            return [AdvertisementItem.from_orm(ad) for ad in ads]
+            return [AdvertisementDto.from_orm(ad) for ad in ads]
         except SQLAlchemyError as e:
             raise KufarScraperDatabaseError("Не удалось получить объявления из базы") from e
 
@@ -50,3 +51,11 @@ class AdvertisementService:
             raise KufarScraperDatabaseError() from e
         except (ValueError, OSError) as e:
             raise KufarScraperError("Не удалось создать отчёт в Excel") from e
+
+    @log
+    def get_advertisement_history(self, advertisement_id: int) -> list[AdvertisementHistoryDto]:
+        try:
+            ads = self._repository.get_history(advertisement_id)
+            return [AdvertisementHistoryDto.from_orm(ad) for ad in ads]
+        except SQLAlchemyError as e:
+            raise KufarScraperDatabaseError() from e
