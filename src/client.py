@@ -15,11 +15,14 @@ class KufarClient:
     def __init__(
         self,
         token: str = KUFAR_TOKEN,
-        session: httpx.Client = None,
+        base_url: str = KUFAR_URL,
+        timeout: float = 15.0,
+        session: httpx.Client | None = None,
     ):
+        self._base_url = base_url.rstrip("/")
         self._session: httpx.Client = session or httpx.Client(
             headers={"Authorization": token if token.startswith("Bearer ") else f"Bearer {token}"},
-            timeout=15,
+            timeout=timeout,
             follow_redirects=True,
         )
 
@@ -30,7 +33,7 @@ class KufarClient:
         self._session.close()
 
     def get_my_items(self) -> list[AdvertisementItem]:
-        url = f"{KUFAR_URL}/{MY_ITEMS_URL}"
+        url = f"{self._base_url}/{MY_ITEMS_URL.lstrip('/')}"
         response = self._session.get(url)
         response.raise_for_status()
 
@@ -40,9 +43,9 @@ class KufarClient:
         parsed_items: list[AdvertisementItem] = []
         for ad in ads_raw:
             price_raw = ad.get("price_byn", "0")
-            price = round(int(price_raw) / 100.0, 2) if price_raw.isdigit() else 0.0
+            price = round(int(price_raw) / 100.0, 2) if str(price_raw).isdigit() else 0.0
 
-            raw_date = ad.get("list_time") or ad.get("start_time")
+            raw_date = ad.get("date") or ad.get("list_time") or ad.get("start_time")
             pub_date = datetime.fromisoformat(raw_date) if raw_date else datetime.now(tz=UTC)
 
             parsed_items.append(

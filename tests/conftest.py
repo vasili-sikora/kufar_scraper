@@ -10,7 +10,7 @@ from client import KufarClient
 from models import Base
 from repository import AdvertisementRepository
 from schemas import AdvertisementItem
-from service import KufarService
+from service import AdvertisementService
 
 
 @pytest.fixture
@@ -35,8 +35,8 @@ def client() -> Generator[KufarClient]:
 
 
 @pytest.fixture
-def service(repository: AdvertisementRepository) -> KufarService:
-    return KufarService(repository)
+def service(repository: AdvertisementRepository) -> AdvertisementService:
+    return AdvertisementService(repository)
 
 
 @pytest.fixture
@@ -67,11 +67,11 @@ def mock_client() -> MagicMock:
 
 @pytest.fixture
 def mock_service() -> MagicMock:
-    mock_service = MagicMock(spec=KufarService)
+    mock_service = MagicMock(spec=AdvertisementService)
     return mock_service
 
 
 @pytest.fixture
-def service_w_mock_repo(mock_repository: MagicMock):
-    service = KufarService(mock_repository)
+def service_w_mock_repo(mock_repository: MagicMock) -> AdvertisementService:
+    service = AdvertisementService(mock_repository)
     return service

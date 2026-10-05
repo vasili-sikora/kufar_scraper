@@ -5,21 +5,19 @@ import httpx
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
-from client import KufarClient
 from exceptions import KufarScraperDatabaseError, KufarScraperError, KufarScraperNetworkError
-from repository import AdvertisementRepository
 from schemas import AdvertisementItem
-from service import KufarService
+from service import AdvertisementService
 
 
-def test_get_all_ads_return_empty_list_when_no_ads(service: KufarService):
+def test_get_all_ads_return_empty_list_when_no_ads(service: AdvertisementService):
     ads = service.get_all_ads_from_db()
     assert ads == []
 
 
 def test_get_all_return_non_empty_list(
-    mock_repository: MagicMock[AdvertisementRepository],
-    service_w_mock_repo: KufarService,
+    mock_repository: MagicMock,
+    service_w_mock_repo: AdvertisementService,
     item: AdvertisementItem,
 ):
     mock_repository.get_all.return_value = [item]
@@ -31,19 +29,19 @@ def test_get_all_return_non_empty_list(
     assert ads[0].description == item.description
 
 
-def test_get_all_throws_exception_on_db_error(mock_repository: MagicMock[AdvertisementRepository]):
+def test_get_all_throws_exception_on_db_error(mock_repository: MagicMock):
     mock_repository.get_all.side_effect = SQLAlchemyError("Database error")
-    service = KufarService(mock_repository)
+    service = AdvertisementService(mock_repository)
 
     with pytest.raises(KufarScraperError):
         service.get_all_ads_from_db()
 
 
 def test_sync_ads_to_db_success(
-    service_w_mock_repo: KufarService,
-    mock_repository: MagicMock[AdvertisementRepository],
+    service_w_mock_repo: AdvertisementService,
+    mock_repository: MagicMock,
     item: AdvertisementItem,
-    mock_client: MagicMock[KufarClient],
+    mock_client: MagicMock,
 ):
     mock_client.get_my_items.return_value = [item]
     mock_client.get_item_page_html.return_value = """
@@ -64,8 +62,8 @@ def test_sync_ads_to_db_success(
 
 
 def test_sync_ads_to_db_throws_exc_on_http_error(
-    service_w_mock_repo: KufarService,
-    mock_client: MagicMock[KufarClient],
+    service_w_mock_repo: AdvertisementService,
+    mock_client: MagicMock,
 ):
     mock_client.get_my_items.side_effect = httpx.HTTPError("Network Error")
 
@@ -74,9 +72,9 @@ def test_sync_ads_to_db_throws_exc_on_http_error(
 
 
 def test_sync_ads_to_db_throws_exception_on_db_error(
-    service_w_mock_repo: KufarService,
-    mock_repository: MagicMock[AdvertisementRepository],
-    mock_client: MagicMock[KufarClient],
+    service_w_mock_repo: AdvertisementService,
+    mock_repository: MagicMock,
+    mock_client: MagicMock,
     item: AdvertisementItem,
 ):
     mock_repository.upsert.side_effect = SQLAlchemyError("Database error")
@@ -87,8 +85,8 @@ def test_sync_ads_to_db_throws_exception_on_db_error(
 
 
 def test_save_to_excel(
-    service_w_mock_repo: KufarService,
-    mock_repository: MagicMock[AdvertisementRepository],
+    service_w_mock_repo: AdvertisementService,
+    mock_repository: MagicMock,
     item: AdvertisementItem,
     tmp_path: Path,
 ):
@@ -102,7 +100,7 @@ def test_save_to_excel(
 
 # TODO: Make this unit tests instead of integration with excel exporter mock
 def test_save_to_excel_throws_exception_on_db_error(
-    service_w_mock_repo: KufarService, mock_repository: MagicMock, tmp_path: Path
+    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock, tmp_path: Path
 ):
     mock_repository.get_all.side_effect = SQLAlchemyError("Database error")
     with pytest.raises(KufarScraperDatabaseError):
@@ -110,7 +108,7 @@ def test_save_to_excel_throws_exception_on_db_error(
 
 
 def test_save_to_excel_throws_exception_on_value_error(
-    service_w_mock_repo: KufarService, mock_repository: MagicMock, tmp_path: Path
+    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock, tmp_path: Path
 ):
     with (
         patch("service.export_to_excel", side_effect=ValueError()),
@@ -120,7 +118,7 @@ def test_save_to_excel_throws_exception_on_value_error(
 
 
 def test_save_to_excel_throws_exception_on_os_error(
-    service_w_mock_repo: KufarService, mock_repository: MagicMock, tmp_path: Path
+    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock, tmp_path: Path
 ):
     with (
         patch("service.export_to_excel", side_effect=OSError()),

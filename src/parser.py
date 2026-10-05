@@ -3,7 +3,7 @@ import json
 import re
 
 
-class ItemHtmlParser:
+class AdvertisementHtmlParser:
     def __init__(self, page_html: str):
         self._page_html = page_html
 

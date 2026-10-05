@@ -9,7 +9,7 @@ from db import SessionFactory, init_db
 from exceptions import KufarScraperError
 from repository import AdvertisementRepository
 from schemas import AdvertisementItem
-from service import KufarService
+from service import AdvertisementService
 
 
 def choose_option() -> str:
@@ -58,10 +58,11 @@ def sync_ads_and_show() -> None:
     try:
         with SessionFactory.begin() as session, KufarClient() as client:
             repo = AdvertisementRepository(session)
-            service = KufarService(repo)
+            service = AdvertisementService(repo)
 
             print("Синхронизируем объявления в базе...")
             service.sync_ads_to_db(client)
+            print("Успешно синхронизировано!")
             ads = service.get_all_ads_from_db()
         _print_ads(ads)
     except KufarScraperError as e:
@@ -84,7 +85,7 @@ def print_from_db():
     try:
         with SessionFactory.begin() as session:
             repo = AdvertisementRepository(session)
-            service = KufarService(repo)
+            service = AdvertisementService(repo)
 
             ads = service.get_all_ads_from_db()
             _print_ads(ads)
@@ -96,7 +97,8 @@ def save_to_excel():
     try:
         with SessionFactory.begin() as session, KufarClient() as client:
             repo = AdvertisementRepository(session)
-            service = KufarService(repo)
+            service = AdvertisementService(repo)
+            print("Синхронизируем объявления в базе и создаём отчёт...")
             service.sync_ads_to_db(client)
             excel_path = service.save_to_excel()
         print(f"Файл с отчётом создан: {excel_path}")

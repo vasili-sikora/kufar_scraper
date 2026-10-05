@@ -31,3 +31,6 @@ wheels/
 
 # TODO
 TODO.*
+
+# Logs
+*.log
