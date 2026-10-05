@@ -4,7 +4,7 @@ import httpx
 from sqlalchemy.exc import SQLAlchemyError
 
 from config import DATA_DIR
-from exceptions import KufarApiError, KufarScrapperException
+from exceptions import KufarScraperDatabaseError, KufarScraperError, KufarScraperNetworkError
 from exporter import export_to_excel
 from logger import log
 from parser import AdvertisementHtmlParser
@@ -28,7 +28,9 @@ class AdvertisementService:
                     ad.description = AdvertisementHtmlParser(ad_html).get_item_description()
                 self._repository.upsert(ad)
         except httpx.HTTPError as e:
-            raise KufarApiError("Не удалось загрузить объявления") from e
+            raise KufarScraperNetworkError("Не удалось загрузить объявления") from e
+        except SQLAlchemyError as e:
+            raise KufarScraperDatabaseError() from e
 
     @log
     def get_all_ads_from_db(self) -> list[AdvertisementItem]:
@@ -36,14 +38,15 @@ class AdvertisementService:
             ads = self._repository.get_all()
             return [AdvertisementItem.from_orm(ad) for ad in ads]
         except SQLAlchemyError as e:
-            raise KufarScrapperException("Не удалось получить объявления из базы") from e
+            raise KufarScraperDatabaseError("Не удалось получить объявления из базы") from e
 
     @log
-    def save_to_excel(self, client) -> Path:
+    def save_to_excel(self, filepath: Path = EXCEL_PATH) -> Path:
         try:
-            self.sync_ads_to_db(client)
             ads = self.get_all_ads_from_db()
-            excel_path = export_to_excel(ads, EXCEL_PATH)
+            excel_path = export_to_excel(ads, filepath)
             return excel_path
+        except SQLAlchemyError as e:
+            raise KufarScraperDatabaseError() from e
         except (ValueError, OSError) as e:
-            raise KufarScrapperException("Не удалось создать отчёт в Excel") from e
+            raise KufarScraperError("Не удалось создать отчёт в Excel") from e
