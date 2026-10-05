@@ -5,11 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from client import KufarClient
 from config import KUFAR_TOKEN
-from db import init_db, session_factory
+from db import init_db
+from dependencies import get_service
 from exceptions import KufarScraperError
-from repository import AdvertisementRepository
 from schemas import AdvertisementDto
-from service import AdvertisementService
 
 
 def choose_option() -> str:
@@ -56,10 +55,7 @@ def main() -> None:
 
 def show_advertisement_history():
     try:
-        with session_factory.begin() as session:
-            repo = AdvertisementRepository(session)
-            service = AdvertisementService(repo)
-
+        with get_service() as service:
             kufar_id = input("Введите id объявления: ")
             if not kufar_id.isdigit():
                 print("ID объявления должно быть числом!")
@@ -80,10 +76,7 @@ def sync_ads_and_show() -> None:
         print("KUFAR_TOKEN не указан в .env! Укажите его и попробуйте снова")
         return
     try:
-        with session_factory.begin() as session, KufarClient() as client:
-            repo = AdvertisementRepository(session)
-            service = AdvertisementService(repo)
-
+        with get_service() as service, KufarClient() as client:
             print("Синхронизируем объявления в базе...")
             service.sync_ads_to_db(client)
             print("Успешно синхронизировано!")
@@ -107,10 +100,7 @@ def _print_ads(ads: list[AdvertisementDto]):
 
 def print_from_db():
     try:
-        with session_factory.begin() as session:
-            repo = AdvertisementRepository(session)
-            service = AdvertisementService(repo)
-
+        with get_service() as service:
             ads = service.get_all_ads_from_db()
             _print_ads(ads)
     except KufarScraperError as e:
@@ -119,9 +109,7 @@ def print_from_db():
 
 def save_to_excel():
     try:
-        with session_factory.begin() as session, KufarClient() as client:
-            repo = AdvertisementRepository(session)
-            service = AdvertisementService(repo)
+        with get_service() as service, KufarClient() as client:
             print("Синхронизируем объявления в базе и создаём отчёт...")
             service.sync_ads_to_db(client)
             excel_path = service.save_to_excel()
