@@ -14,7 +14,7 @@ def test_save_to_excel_throws_value_error_on_empty_ads_list(tmp_path: Path):
 
 def test_save_to_excel_throws_value_error_on_empty_path(item: AdvertisementItem):
     with pytest.raises(ValueError):
-        export_to_excel([item], "")
+        export_to_excel([item], Path(""))
 
 
 def test_save_to_excel_success(item: AdvertisementItem, tmp_path: Path):

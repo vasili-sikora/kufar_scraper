@@ -12,7 +12,7 @@ EXCEL_PATH = DATA_DIR / "advertisements.xlsx"
 def export_to_excel(ads: list[AdvertisementItem], filepath: Path = EXCEL_PATH) -> Path:
     if not ads:
         raise ValueError("Ads list is empty!")
-    if not filepath:
+    if not filepath or not filepath.name:
         raise ValueError("Invalid filepath!")
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
