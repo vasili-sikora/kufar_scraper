@@ -11,3 +11,4 @@ DATA_DIR.mkdir(exist_ok=True, parents=True)
 DB_PATH = DATA_DIR / "kufar.db"
 DB_URL = os.getenv("DB_URL", f"sqlite:///{DB_PATH}")
 LOGS_FILEPATH = Path(__file__).resolve().parent.parent / "logs.log"
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
