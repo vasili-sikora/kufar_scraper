@@ -57,7 +57,7 @@ def test_sync_ads_to_db_success(
 
     mock_repository.upsert.assert_called_once()
     saved_item = mock_repository.upsert.call_args[0][0]
-    assert saved_item.description == advertisement.description
+    assert saved_item.description == "Свежее описание"
     assert saved_item.kufar_id == advertisement.kufar_id
 
 

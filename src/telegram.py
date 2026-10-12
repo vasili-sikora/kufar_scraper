@@ -1,30 +1,91 @@
 import asyncio
 
-from aiogram import Bot, Dispatcher, html
+from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
+from aiogram.exceptions import TelegramNetworkError
+from aiogram.filters import Command
+from aiogram.filters.exception import ExceptionTypeFilter
 from aiogram.types import Message
+from aiogram.types.bot_command import BotCommand
+from aiogram.types.error_event import ErrorEvent
+from sqlalchemy.exc import SQLAlchemyError
 
+from client import KufarClient
 from config import TELEGRAM_BOT_TOKEN
+from dependencies import get_service
+from exceptions import KufarScraperDatabaseError, KufarScraperError
+from schemas import AdvertisementHistoryDto
 
 dp = Dispatcher()
 
 
-@dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
-    msg = message.from_user
-    if not msg:
-        return
-    await message.answer(f"Hello, {html.bold(msg.full_name)}")
+def sync_ads() -> None:
+    with get_service() as service, KufarClient() as client:
+        service.sync_ads_to_db(client)
 
 
-@dp.message()
-async def echo_handler(message: Message) -> None:
+@dp.message(Command("sync"))
+async def sync_handler(message: Message):
+    await message.answer("Syncing ads to database...")
+
     try:
-        await message.send_copy(chat_id=message.chat.id)
-    except TypeError:
-        await message.answer("Nice try!")
+        await asyncio.to_thread(sync_ads)
+    except KufarScraperError as e:
+        await message.answer(f"Error: {e}")
+    except SQLAlchemyError:
+        await message.answer("Database error occurred.")
+    else:
+        await message.answer("Ads synced successfully!")
+
+
+def create_excel_report() -> None:
+    with get_service() as service:
+        service.save_to_excel()
+
+
+@dp.message(Command("excel"))
+async def excel_handler(message: Message):
+    await message.answer("Exporting ads to Excel...")
+
+    try:
+        await asyncio.to_thread(create_excel_report)
+    except KufarScraperDatabaseError:
+        await message.answer("Database error occurred.")
+    except KufarScraperError as e:
+        await message.answer(f"Error: {e}")
+    else:
+        await message.answer("Excel report created successfully!")
+
+
+def get_advertisement_history() -> list[AdvertisementHistoryDto]:
+    with get_service() as service:
+        return service.get_advertisement_history(advertisement_id=1079214458)  # Example ID
+
+
+@dp.message(Command("history"))
+async def history_handler(message: Message):
+    await message.answer("Getting advertisement history...")
+
+    try:
+        ad_history = await asyncio.to_thread(get_advertisement_history)
+        if not ad_history:
+            await message.answer("No advertisement history found.")
+            return
+        for snapshot in ad_history:
+            await message.answer(str(snapshot), parse_mode=None)
+    except KufarScraperDatabaseError:
+        await message.answer("Database error occurred.")
+    else:
+        await message.answer("Advertisement history retrieved successfully!")
+
+
+@dp.error(ExceptionTypeFilter(TelegramNetworkError))
+async def telegram_network_error_handler(event: ErrorEvent):
+    if event.update.message is not None:
+        await event.update.message.answer(
+            "Telegram network error occurred. Please try again later."
+        )
 
 
 async def create_bot():
@@ -32,6 +93,13 @@ async def create_bot():
         raise RuntimeError("TELEGRAM_BOT_TOKEN not set!")
     bot = Bot(token=TELEGRAM_BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
+    await bot.set_my_commands(
+        [
+            BotCommand(command="sync", description="Sync ads to database"),
+            BotCommand(command="excel", description="Export ads to Excel"),
+            BotCommand(command="history", description="Get advertisement history"),
+        ]
+    )
     await dp.start_polling(bot)
 
 
