@@ -1,22 +1,35 @@
 import asyncio
+from pathlib import Path
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramNetworkError
-from aiogram.filters import Command
+from aiogram.filters import Command, Filter
 from aiogram.filters.exception import ExceptionTypeFilter
 from aiogram.types import Message
 from aiogram.types.bot_command import BotCommand
 from aiogram.types.error_event import ErrorEvent
+from aiogram.types.input_file import FSInputFile
 
 from client import KufarClient
-from config import TELEGRAM_BOT_TOKEN
+from config import TELEGRAM_BOT_TOKEN, TELEGRAM_USER_ID
 from dependencies import get_service
 from exceptions import KufarScraperError
 from schemas import AdvertisementHistoryDto
 
+
+class OwnerFilter(Filter):
+    async def __call__(self, message: Message) -> bool:
+        return (
+            message.chat.type == "private"
+            and message.from_user is not None
+            and message.from_user.id == TELEGRAM_USER_ID
+        )
+
+
 dp = Dispatcher()
+dp.message.filter(OwnerFilter())
 
 
 def sync_ads() -> None:
@@ -31,21 +44,24 @@ async def sync_handler(message: Message):
     await message.answer("Ads synced successfully!")
 
 
-def create_excel_report() -> None:
+def create_excel_report() -> Path:
     with get_service() as service:
-        service.save_to_excel()
+        return service.save_to_excel()
 
 
 @dp.message(Command("excel"))
 async def excel_handler(message: Message):
     await message.answer("Exporting ads to Excel...")
-    await asyncio.to_thread(create_excel_report)
-    await message.answer("Excel report created successfully!")
+    excel_path = await asyncio.to_thread(create_excel_report)
+    await message.answer_document(
+        document=FSInputFile(excel_path),
+        caption="Excel report generated successfully!",
+    )
 
 
 def get_advertisement_history() -> list[AdvertisementHistoryDto]:
     with get_service() as service:
-        return service.get_advertisement_history(advertisement_id=1079214458)  # Example ID
+        return service.get_advertisement_history(advertisement_id=1079214458)
 
 
 @dp.message(Command("history"))
@@ -79,6 +95,8 @@ async def scraper_error_handler(event: ErrorEvent):
 async def create_bot():
     if not TELEGRAM_BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN not set!")
+    if not TELEGRAM_USER_ID:
+        raise RuntimeError("TELEGRAM_USER_ID not set!")
     bot = Bot(token=TELEGRAM_BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
     await bot.set_my_commands(
