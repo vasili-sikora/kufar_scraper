@@ -9,12 +9,11 @@ from aiogram.filters.exception import ExceptionTypeFilter
 from aiogram.types import Message
 from aiogram.types.bot_command import BotCommand
 from aiogram.types.error_event import ErrorEvent
-from sqlalchemy.exc import SQLAlchemyError
 
 from client import KufarClient
 from config import TELEGRAM_BOT_TOKEN
 from dependencies import get_service
-from exceptions import KufarScraperDatabaseError, KufarScraperError
+from exceptions import KufarScraperError
 from schemas import AdvertisementHistoryDto
 
 dp = Dispatcher()
@@ -28,15 +27,8 @@ def sync_ads() -> None:
 @dp.message(Command("sync"))
 async def sync_handler(message: Message):
     await message.answer("Syncing ads to database...")
-
-    try:
-        await asyncio.to_thread(sync_ads)
-    except KufarScraperError as e:
-        await message.answer(f"Error: {e}")
-    except SQLAlchemyError:
-        await message.answer("Database error occurred.")
-    else:
-        await message.answer("Ads synced successfully!")
+    await asyncio.to_thread(sync_ads)
+    await message.answer("Ads synced successfully!")
 
 
 def create_excel_report() -> None:
@@ -47,15 +39,8 @@ def create_excel_report() -> None:
 @dp.message(Command("excel"))
 async def excel_handler(message: Message):
     await message.answer("Exporting ads to Excel...")
-
-    try:
-        await asyncio.to_thread(create_excel_report)
-    except KufarScraperDatabaseError:
-        await message.answer("Database error occurred.")
-    except KufarScraperError as e:
-        await message.answer(f"Error: {e}")
-    else:
-        await message.answer("Excel report created successfully!")
+    await asyncio.to_thread(create_excel_report)
+    await message.answer("Excel report created successfully!")
 
 
 def get_advertisement_history() -> list[AdvertisementHistoryDto]:
@@ -67,17 +52,14 @@ def get_advertisement_history() -> list[AdvertisementHistoryDto]:
 async def history_handler(message: Message):
     await message.answer("Getting advertisement history...")
 
-    try:
-        ad_history = await asyncio.to_thread(get_advertisement_history)
-        if not ad_history:
-            await message.answer("No advertisement history found.")
-            return
-        for snapshot in ad_history:
-            await message.answer(str(snapshot), parse_mode=None)
-    except KufarScraperDatabaseError:
-        await message.answer("Database error occurred.")
-    else:
-        await message.answer("Advertisement history retrieved successfully!")
+    ad_history = await asyncio.to_thread(get_advertisement_history)
+    if not ad_history:
+        await message.answer("No advertisement history found.")
+        return
+    for snapshot in ad_history:
+        await message.answer(str(snapshot), parse_mode=None)
+
+    await message.answer("Advertisement history retrieved successfully!")
 
 
 @dp.error(ExceptionTypeFilter(TelegramNetworkError))
@@ -86,6 +68,12 @@ async def telegram_network_error_handler(event: ErrorEvent):
         await event.update.message.answer(
             "Telegram network error occurred. Please try again later."
         )
+
+
+@dp.error(ExceptionTypeFilter(KufarScraperError))
+async def scraper_error_handler(event: ErrorEvent):
+    if event.update.message is not None:
+        await event.update.message.answer(str(event.exception))
 
 
 async def create_bot():
