@@ -6,6 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramNetworkError
 from aiogram.filters import Command, Filter
+from aiogram.filters.command import CommandObject
 from aiogram.filters.exception import ExceptionTypeFilter
 from aiogram.types import Message
 from aiogram.types.bot_command import BotCommand
@@ -59,16 +60,31 @@ async def excel_handler(message: Message):
     )
 
 
-def get_advertisement_history() -> list[AdvertisementHistoryDto]:
+def get_advertisement_history(advertisement_id: int) -> list[AdvertisementHistoryDto]:
     with get_service() as service:
-        return service.get_advertisement_history(advertisement_id=1079214458)
+        return service.get_advertisement_history(advertisement_id=advertisement_id)
 
 
 @dp.message(Command("history"))
-async def history_handler(message: Message):
+async def history_handler(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer("Please provide an advertisement ID.")
+        return
+
+    try:
+        advertisement_id = int(command.args)
+    except ValueError:
+        await message.answer("Advertisement ID must be a number.")
+        return
+
+    if advertisement_id <= 0:
+        await message.answer("Advertisement ID must be a positive number.")
+        return
     await message.answer("Getting advertisement history...")
 
-    ad_history = await asyncio.to_thread(get_advertisement_history)
+    ad_history = await asyncio.to_thread(
+        get_advertisement_history, advertisement_id=advertisement_id
+    )
     if not ad_history:
         await message.answer("No advertisement history found.")
         return
