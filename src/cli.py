@@ -1,13 +1,14 @@
+import logging
 import os
 import subprocess
-
-from sqlalchemy.exc import SQLAlchemyError
 
 from client import KufarClient
 from config import KUFAR_TOKEN
 from dependencies import get_service
-from exceptions import KufarScraperError
+from exceptions import KufarScraperDatabaseError, KufarScraperError
 from schemas import AdvertisementDto
+
+logger = logging.getLogger(__name__)
 
 
 def cli() -> None:
@@ -16,6 +17,7 @@ def cli() -> None:
         choice = choose_option()
 
         if choice == "q":
+            logger.info("Exiting the application.")
             break
 
         clear_console()
@@ -76,14 +78,14 @@ def sync_ads_and_show() -> None:
         with get_service() as service, KufarClient() as client:
             print("Синхронизируем объявления в базе...")
             service.sync_ads_to_db(client)
-            print("Успешно синхронизировано!")
             ads = service.get_all_ads_from_db()
+        print("Успешно синхронизировано!")
         _print_ads(ads)
+    except KufarScraperDatabaseError:
+        print("Ошибка базы данных...")
+        return
     except KufarScraperError as e:
         print(e)
-        return
-    except SQLAlchemyError:
-        print("Ошибка базы данных...")
         return
 
 
@@ -111,7 +113,7 @@ def save_to_excel():
             service.sync_ads_to_db(client)
             excel_path = service.save_to_excel()
         print(f"Файл с отчётом создан: {excel_path}")
+    except KufarScraperDatabaseError:
+        print("Ошибка базы данных...")
     except KufarScraperError as e:
         print(e)
-    except SQLAlchemyError:
-        print("Ошибка базы данных...")
