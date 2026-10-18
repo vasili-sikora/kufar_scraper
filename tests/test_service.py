@@ -5,7 +5,7 @@ import httpx
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
-from exceptions import KufarScraperDatabaseError, KufarScraperError, KufarScraperNetworkError
+from exceptions import KufarScraperError, KufarScraperNetworkError
 from schemas import AdvertisementDto
 from service import AdvertisementService
 
@@ -30,11 +30,14 @@ def test_get_all_return_non_empty_list(
 
 
 def test_get_all_throws_exception_on_db_error(mock_repository: MagicMock):
-    mock_repository.get_all.side_effect = SQLAlchemyError("Database error")
+    db_error = SQLAlchemyError("Database error")
+    mock_repository.get_all.side_effect = db_error
     service = AdvertisementService(mock_repository)
 
-    with pytest.raises(KufarScraperError):
+    with pytest.raises(SQLAlchemyError) as exc_info:
         service.get_all_ads_from_db()
+
+    assert exc_info.value is db_error
 
 
 def test_sync_ads_to_db_success(
@@ -77,11 +80,14 @@ def test_sync_ads_to_db_throws_exception_on_db_error(
     mock_client: MagicMock,
     advertisement: AdvertisementDto,
 ):
-    mock_repository.upsert.side_effect = SQLAlchemyError("Database error")
+    db_error = SQLAlchemyError("Database error")
+    mock_repository.upsert.side_effect = db_error
     mock_client.get_my_items.return_value = [advertisement]
     mock_client.get_item_page_html.return_value = ""
-    with pytest.raises(KufarScraperDatabaseError):
+    with pytest.raises(SQLAlchemyError) as exc_info:
         service_w_mock_repo.sync_ads_to_db(mock_client)
+
+    assert exc_info.value is db_error
 
 
 def test_save_to_excel(
@@ -98,13 +104,32 @@ def test_save_to_excel(
     assert test_filepath.exists()
 
 
-# TODO: Make this unit tests instead of integration with excel exporter mock
+@pytest.mark.parametrize("repository_method", ["get_all", "get_all_history"])
 def test_save_to_excel_throws_exception_on_db_error(
-    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock, tmp_path: Path
+    service_w_mock_repo: AdvertisementService,
+    mock_repository: MagicMock,
+    tmp_path: Path,
+    repository_method: str,
 ):
-    mock_repository.get_all.side_effect = SQLAlchemyError("Database error")
-    with pytest.raises(KufarScraperDatabaseError):
+    db_error = SQLAlchemyError("Database error")
+    mock_repository.get_all.return_value = []
+    getattr(mock_repository, repository_method).side_effect = db_error
+    with pytest.raises(SQLAlchemyError) as exc_info:
         service_w_mock_repo.save_to_excel(filepath=tmp_path / "test.xlsx")
+
+    assert exc_info.value is db_error
+
+
+def test_get_advertisement_history_propagates_db_error(
+    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock
+):
+    db_error = SQLAlchemyError("Database error")
+    mock_repository.get_history.side_effect = db_error
+
+    with pytest.raises(SQLAlchemyError) as exc_info:
+        service_w_mock_repo.get_advertisement_history(12345)
+
+    assert exc_info.value is db_error
 
 
 def test_save_to_excel_throws_exception_on_value_error(

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher
@@ -17,6 +18,7 @@ from client import KufarClient
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_USER_ID
 from dependencies import get_service
 from exceptions import KufarScraperError
+from logger import setup_logging
 from schemas import AdvertisementHistoryDto
 
 
@@ -31,6 +33,7 @@ class OwnerFilter(Filter):
 
 dp = Dispatcher()
 dp.message.filter(OwnerFilter())
+logger = logging.getLogger(__name__)
 
 
 def sync_ads() -> None:
@@ -97,9 +100,7 @@ async def history_handler(message: Message, command: CommandObject):
 @dp.error(ExceptionTypeFilter(TelegramNetworkError))
 async def telegram_network_error_handler(event: ErrorEvent):
     if event.update.message is not None:
-        await event.update.message.answer(
-            "Telegram network error occurred. Please try again later."
-        )
+        logger.exception("Telegram network error occurred")
 
 
 @dp.error(ExceptionTypeFilter(KufarScraperError))
@@ -109,6 +110,8 @@ async def scraper_error_handler(event: ErrorEvent):
 
 
 async def create_bot():
+    setup_logging("telegram")
+    logger.info("Starting Telegram bot...")
     if not TELEGRAM_BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN not set!")
     if not TELEGRAM_USER_ID:

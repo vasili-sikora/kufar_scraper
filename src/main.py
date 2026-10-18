@@ -1,12 +1,18 @@
+import logging
 import subprocess
 import sys
 from pathlib import Path
 
 from cli import cli
 from db import init_db
+from logger import setup_logging
+
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
+    setup_logging("cli")
+    logger.info("Starting application...")
     init_db()
 
     bot_path = Path(__file__).resolve().with_name("telegram.py")
@@ -15,7 +21,8 @@ def main() -> None:
     try:
         cli()
     except KeyboardInterrupt:
-        print("\nЗавершаем приложение...")
+        logger.info("KeyboardInterrupt received. Shutting down...")
+        print("\nShutting down...")
     finally:
         if bot_process.poll() is None:
             bot_process.terminate()

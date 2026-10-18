@@ -1,26 +1,18 @@
-import datetime
-from collections.abc import Callable
-from functools import wraps
-from typing import Any
+import logging
+from pathlib import Path
+from typing import Literal
 
-from config import LOGS_FILEPATH
-
-
-def get_curr_time() -> datetime.datetime:
-    return datetime.datetime.now(tz=datetime.UTC)
+LOGS_DIR = Path(__file__).resolve().parent.parent / "logs"
 
 
-def log(func: Callable) -> Callable:
-    @wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
-        with open(file=LOGS_FILEPATH, mode="a", encoding="utf-8") as file:
-            try:
-                file.write(f"[INFO] [{get_curr_time()}]: {func.__name__}\n")
-                res = func(*args, **kwargs)
-                file.write(f"[INFO] [{get_curr_time()}]: {func.__name__} успешно завершилась\n")
-                return res
-            except Exception as e:
-                file.write(f"[ERROR]: {func.__name__}: {e!s}\n")
-                raise
+def setup_logging(interface: Literal["cli", "telegram"]) -> None:
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-    return wrapper
+    logging.basicConfig(
+        filename=LOGS_DIR / f"{interface}.log",
+        encoding="utf-8",
+        level=logging.INFO,
+        format=("%(asctime)s | %(levelname)s | %(name)s | %(message)s"),
+        datefmt="%Y-%m-%d %H:%M:%S",
+        force=True,
+    )
