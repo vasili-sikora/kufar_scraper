@@ -15,9 +15,12 @@ class AdvertisementDto:
     description: str | None = None
 
     def __str__(self) -> str:
-        desc_preview = (self.description[:60] + "...") if self.description else "нет описания"
+        desc_preview = (
+            ("\n" + self.description[:60] + "...") if self.description else "нет описания"
+        )
         return (
             f"[{self.status.upper()}] {self.title} — {self.price} BYN\n"
+            f"  ID: {self.kufar_id}\n"
             f"  Спеки/описание: {desc_preview}\n"
             f"  Ссылка: {self.link}"
         )

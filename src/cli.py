@@ -12,28 +12,32 @@ logger = logging.getLogger(__name__)
 
 
 def cli() -> None:
-    while True:
+    try:
+        while True:
+            clear_console()
+            choice = choose_option()
+
+            if choice == "q":
+                clear_console()
+                break
+
+            clear_console()
+
+            if choice == "1":
+                sync_ads_and_show()
+            elif choice == "2":
+                print_from_db()
+            elif choice == "3":
+                save_to_excel()
+            elif choice == "4":
+                show_advertisement_history()
+            else:
+                print("Неверный выбор, попробуйте снова.")
+
+            input("\nНажмите Enter чтобы вернуться в меню...")
+    except KeyboardInterrupt:
         clear_console()
-        choice = choose_option()
-
-        if choice == "q":
-            logger.info("Exiting the application.")
-            break
-
-        clear_console()
-
-        if choice == "1":
-            sync_ads_and_show()
-        elif choice == "2":
-            print_from_db()
-        elif choice == "3":
-            save_to_excel()
-        elif choice == "4":
-            show_advertisement_history()
-        else:
-            print("Неверный выбор, попробуйте снова.")
-
-        input("\nНажмите Enter чтобы вернуться в меню...")
+        logger.info("Exiting the application.")
 
 
 def choose_option() -> str:

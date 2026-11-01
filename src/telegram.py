@@ -22,7 +22,7 @@ from config import TELEGRAM_BOT_TOKEN, TELEGRAM_USER_ID
 from dependencies import get_service
 from exceptions import KufarScraperError
 from logger import setup_logging
-from schemas import AdvertisementHistoryDto
+from schemas import AdvertisementDto, AdvertisementHistoryDto
 
 
 class OwnerFilter(Filter):
@@ -81,6 +81,20 @@ async def excel_handler(message: Message):
         caption="Excel report generated successfully!",
     )
     logger.info("Message sent successfully")
+
+
+def get_ads() -> list[AdvertisementDto]:
+    with get_service() as service:
+        return service.get_all_ads_from_db()
+
+
+@dp.message(Command("ads"))
+async def ads_handler(message: Message):
+    await message.answer("Getting ads...")
+    ads = await asyncio.to_thread(get_ads)
+    for ad in ads:
+        await message.answer(str(ad))
+    await message.answer("Ads send succesfully")
 
 
 def get_advertisement_history(advertisement_id: int) -> list[AdvertisementHistoryDto]:
@@ -144,6 +158,7 @@ async def create_bot():
             BotCommand(command="sync", description="Sync ads to database"),
             BotCommand(command="excel", description="Export ads to Excel"),
             BotCommand(command="history", description="Get advertisement history"),
+            BotCommand(command="ads", description="Get all ads"),
         ]
     )
     await dp.start_polling(bot)
