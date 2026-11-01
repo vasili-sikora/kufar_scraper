@@ -21,6 +21,7 @@ from client import KufarClient
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_USER_ID
 from dependencies import get_service
 from exceptions import KufarScraperError
+from exporters import ExcelExporter, GoogleSheetsExporter
 from logger import setup_logging
 from schemas import AdvertisementDto, AdvertisementHistoryDto
 
@@ -67,7 +68,7 @@ async def sync_handler(message: Message):
 
 def create_excel_report() -> Path:
     with get_service() as service:
-        return service.save_to_excel()
+        return service.export_ads(ExcelExporter())
 
 
 @dp.message(Command("excel"))
@@ -83,18 +84,42 @@ async def excel_handler(message: Message):
     logger.info("Message sent successfully")
 
 
+def export_to_google_sheets() -> str:
+    with get_service() as service:
+        return service.export_ads(GoogleSheetsExporter())
+
+
+@dp.message(Command("sheets"))
+@log_message
+async def sheets_handler(message: Message):
+    await message.answer("Exporting ads to Google Sheets...")
+    sheet_url = await asyncio.to_thread(export_to_google_sheets)
+    text = (
+        "Ads exported to Google Sheets successfully!\n\n"
+        f"<a href='{sheet_url}'>Open Google Sheet</a>"
+    )
+    await message.answer(
+        text,
+        disable_web_page_preview=False,
+    )
+
+
 def get_ads() -> list[AdvertisementDto]:
     with get_service() as service:
         return service.get_all_ads_from_db()
 
 
 @dp.message(Command("ads"))
+@log_message
 async def ads_handler(message: Message):
     await message.answer("Getting ads...")
     ads = await asyncio.to_thread(get_ads)
+    if not ads:
+        await message.answer("No ads found in database.")
+        return
     for ad in ads:
-        await message.answer(str(ad))
-    await message.answer("Ads send succesfully")
+        await message.answer(str(ad), parse_mode=None)
+    await message.answer("Ads sent successfully")
 
 
 def get_advertisement_history(advertisement_id: int) -> list[AdvertisementHistoryDto]:
@@ -157,8 +182,9 @@ async def create_bot():
         [
             BotCommand(command="sync", description="Sync ads to database"),
             BotCommand(command="excel", description="Export ads to Excel"),
-            BotCommand(command="history", description="Get advertisement history"),
+            BotCommand(command="sheets", description="Export ads to Google Sheets"),
             BotCommand(command="ads", description="Get all ads"),
+            BotCommand(command="history", description="Get advertisement history"),
         ]
     )
     await dp.start_polling(bot)

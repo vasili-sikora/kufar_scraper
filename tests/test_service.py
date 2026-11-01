@@ -1,11 +1,12 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import httpx
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 from exceptions import KufarScraperError, KufarScraperNetworkError
+from exporters import BaseExporter, ExcelExporter
 from schemas import AdvertisementDto
 from service import AdvertisementService
 
@@ -90,32 +91,36 @@ def test_sync_ads_to_db_throws_exception_on_db_error(
     assert exc_info.value is db_error
 
 
-def test_save_to_excel(
+def test_export_ads_with_excel_exporter(
     service_w_mock_repo: AdvertisementService,
     mock_repository: MagicMock,
     advertisement: AdvertisementDto,
     tmp_path: Path,
 ):
     mock_repository.get_all.return_value = [advertisement]
+    mock_repository.get_all_history.return_value = []
     test_filepath = tmp_path / "test.xlsx"
-    service_w_mock_repo.save_to_excel(filepath=test_filepath)
-    mock_repository.get_all.assert_called_once()
 
-    assert test_filepath.exists()
+    result_path = service_w_mock_repo.export_ads(ExcelExporter(filepath=test_filepath))
+    mock_repository.get_all.assert_called_once()
+    mock_repository.get_all_history.assert_called_once()
+
+    assert result_path.exists()
 
 
 @pytest.mark.parametrize("repository_method", ["get_all", "get_all_history"])
-def test_save_to_excel_throws_exception_on_db_error(
+def test_export_ads_throws_exception_on_db_error(
     service_w_mock_repo: AdvertisementService,
     mock_repository: MagicMock,
-    tmp_path: Path,
     repository_method: str,
 ):
     db_error = SQLAlchemyError("Database error")
     mock_repository.get_all.return_value = []
     getattr(mock_repository, repository_method).side_effect = db_error
+    mock_exporter = MagicMock(spec=BaseExporter)
+
     with pytest.raises(SQLAlchemyError) as exc_info:
-        service_w_mock_repo.save_to_excel(filepath=tmp_path / "test.xlsx")
+        service_w_mock_repo.export_ads(mock_exporter)
 
     assert exc_info.value is db_error
 
@@ -132,21 +137,25 @@ def test_get_advertisement_history_propagates_db_error(
     assert exc_info.value is db_error
 
 
-def test_save_to_excel_throws_exception_on_value_error(
-    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock, tmp_path: Path
+def test_export_ads_throws_exception_on_value_error(
+    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock
 ):
-    with (
-        patch("service.export_to_excel", side_effect=ValueError()),
-        pytest.raises(KufarScraperError),
-    ):
-        service_w_mock_repo.save_to_excel(filepath=tmp_path / "test.xlsx")
+    mock_repository.get_all.return_value = []
+    mock_repository.get_all_history.return_value = []
+    mock_exporter = MagicMock(spec=BaseExporter)
+    mock_exporter.export.side_effect = ValueError("Export failed")
+
+    with pytest.raises(KufarScraperError):
+        service_w_mock_repo.export_ads(mock_exporter)
 
 
-def test_save_to_excel_throws_exception_on_os_error(
-    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock, tmp_path: Path
+def test_export_ads_throws_exception_on_os_error(
+    service_w_mock_repo: AdvertisementService, mock_repository: MagicMock
 ):
-    with (
-        patch("service.export_to_excel", side_effect=OSError()),
-        pytest.raises(KufarScraperError),
-    ):
-        service_w_mock_repo.save_to_excel(filepath=tmp_path / "test.xlsx")
+    mock_repository.get_all.return_value = []
+    mock_repository.get_all_history.return_value = []
+    mock_exporter = MagicMock(spec=BaseExporter)
+    mock_exporter.export.side_effect = OSError("Disk write failed")
+
+    with pytest.raises(KufarScraperError):
+        service_w_mock_repo.export_ads(mock_exporter)

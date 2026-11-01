@@ -1,16 +1,12 @@
 import logging
-from pathlib import Path
 
 import httpx
 
-from config import DATA_DIR
 from exceptions import KufarScraperError, KufarScraperNetworkError
-from exporter import export_to_excel
+from exporters import BaseExporter
 from parser import AdvertisementHtmlParser
 from repository import AdvertisementRepository
 from schemas import AdvertisementDto, AdvertisementHistoryDto
-
-EXCEL_PATH = DATA_DIR / "advertisements.xlsx"
 
 logger = logging.getLogger(__name__)
 
@@ -41,22 +37,18 @@ class AdvertisementService:
         logger.info(f"Fetched {len(ads)} ads from database.")
         return [AdvertisementDto.from_orm(ad) for ad in ads]
 
-    def save_to_excel(self, filepath: Path = EXCEL_PATH) -> Path:
+    def export_ads[T](self, exporter: BaseExporter[T]) -> T:
         try:
-            logger.info("Saving ads to Excel...")
+            logger.info("Exporting ads...")
             ads = self.get_all_ads_from_db()
             ads_history_orm = self._repository.get_all_history()
             ads_history = [AdvertisementHistoryDto.from_orm(a) for a in ads_history_orm]
-            excel_path = export_to_excel(
-                ads=ads,
-                ads_history=ads_history,
-                filepath=filepath,
-            )
-            logger.info(f"Ads saved to Excel at {excel_path}")
-            return excel_path
+            result = exporter.export(ads=ads, ads_history=ads_history)
+            logger.info("Ads exported successfully.")
+            return result
         except (ValueError, OSError) as e:
-            logger.exception("Error while saving ads to Excel")
-            raise KufarScraperError("Не удалось создать отчёт в Excel") from e
+            logger.exception("Error while exporting ads")
+            raise KufarScraperError("Не удалось экспортировать данные") from e
 
     def get_advertisement_history(self, advertisement_id: int) -> list[AdvertisementHistoryDto]:
         logger.info(f"Fetching advertisement history for ID: {advertisement_id}")
