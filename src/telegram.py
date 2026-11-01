@@ -1,6 +1,9 @@
 import asyncio
 import logging
+from collections.abc import Callable
+from functools import wraps
 from pathlib import Path
+from typing import Any
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -36,12 +39,26 @@ dp.message.filter(OwnerFilter())
 logger = logging.getLogger(__name__)
 
 
+def log_message(func: Callable) -> Callable:
+    @wraps(func)
+    async def wrapper(*args, **kwargs) -> Any:
+        try:
+            res = await func(*args, **kwargs)
+            logger.info("Message successfully sent")
+            return res
+        except TelegramNetworkError:
+            logger.exception("Unable to send message")
+
+    return wrapper
+
+
 def sync_ads() -> None:
     with get_service() as service, KufarClient() as client:
         service.sync_ads_to_db(client)
 
 
 @dp.message(Command("sync"))
+@log_message
 async def sync_handler(message: Message):
     await message.answer("Syncing ads to database...")
     await asyncio.to_thread(sync_ads)
@@ -54,13 +71,16 @@ def create_excel_report() -> Path:
 
 
 @dp.message(Command("excel"))
+@log_message
 async def excel_handler(message: Message):
     await message.answer("Exporting ads to Excel...")
     excel_path = await asyncio.to_thread(create_excel_report)
+    logger.info("Sending excel through telegram...")
     await message.answer_document(
         document=FSInputFile(excel_path),
         caption="Excel report generated successfully!",
     )
+    logger.info("Message sent successfully")
 
 
 def get_advertisement_history(advertisement_id: int) -> list[AdvertisementHistoryDto]:
@@ -69,6 +89,7 @@ def get_advertisement_history(advertisement_id: int) -> list[AdvertisementHistor
 
 
 @dp.message(Command("history"))
+@log_message
 async def history_handler(message: Message, command: CommandObject):
     if not command.args:
         await message.answer("Please provide an advertisement ID.")

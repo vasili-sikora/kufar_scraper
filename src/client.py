@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 from random import uniform
 from time import sleep
@@ -9,6 +10,7 @@ from schemas import AdvertisementDto
 
 KUFAR_URL = "https://api.kufar.by"
 MY_ITEMS_URL = "my-items-v2/v1/items"
+logger = logging.getLogger(__name__)
 
 
 class KufarClient:
@@ -34,12 +36,15 @@ class KufarClient:
 
     def get_my_items(self) -> list[AdvertisementDto]:
         url = f"{self._base_url}/{MY_ITEMS_URL.lstrip('/')}"
+        logger.info(f"Fetching my items from Kufar API: {url}")
         response = self._session.get(url)
+        logger.info(f"Received response with status code: {response.status_code}")
         response.raise_for_status()
 
         data = response.json()
         ads_raw = data.get("ads", [])
 
+        logger.info(f"Found {len(ads_raw)} ads in the response.")
         parsed_items: list[AdvertisementDto] = []
         for ad in ads_raw:
             price_raw = ad.get("price_byn", "0")
@@ -67,11 +72,15 @@ class KufarClient:
 
         sleep(uniform(0.8, 1.8))
         try:
+            logger.info(f"Fetching item page HTML from Kufar: {item_url}")
             response = self._session.get(item_url)
+            logger.info(f"Received response with status code: {response.status_code}")
             response.raise_for_status()
             page_html = response.text
             return page_html
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
+                logger.warning(f"Item page not found (404): {item_url}")
                 return ""
+            logger.exception("HTTP error while fetching item page HTML")
             raise
