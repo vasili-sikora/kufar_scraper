@@ -22,10 +22,6 @@ wheels/
 #data
 /data
 
-#db and excel
-*.db
-*.xlsx
-
 # Pytest
 *.pytest_cache
 
@@ -34,3 +30,6 @@ TODO.*
 
 # Logs
 *.log
+
+# Skills
+skills
