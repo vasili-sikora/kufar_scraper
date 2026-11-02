@@ -8,9 +8,9 @@ from cli import cli
 from client import KufarClient
 from db import init_db
 from dependencies import get_service
-from exceptions import KufarScraperError
 from exporters import GoogleSheetsExporter
 from logger import setup_logging
+from telegram import send_telegram_notification
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +57,15 @@ def run_cron() -> None:
     try:
         with get_service() as service, KufarClient() as client:
             service.sync_ads_to_db(client)
-            service.export_ads(GoogleSheetsExporter())
+            sheet_url = service.export_ads(GoogleSheetsExporter())
         logger.info("Cron job completed successfully.")
-    except KufarScraperError:
+        send_telegram_notification(
+            f"<b>Cron: Синхронизация Kufar завершена</b>\n"
+            f"<a href='{sheet_url}'>Открыть Google Таблицу</a>"
+        )
+    except Exception as e:
         logger.exception("An error occurred during the cron job.")
+        send_telegram_notification(f"<b>Cron: Ошибка синхронизации Kufar</b>\n<code>{e}</code>")
         sys.exit(1)
 
 

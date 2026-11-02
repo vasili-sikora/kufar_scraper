@@ -64,13 +64,13 @@ def test_google_sheets_exporter_successful_export_with_history(
 
     # Проверяем заполнение листа объявлений
     mock_ads_sheet.clear.assert_called_once()
-    mock_ads_sheet.update.assert_called_once()
-    mock_ads_sheet.format.assert_called_once()
+    assert mock_ads_sheet.update.call_count == 2
+    assert mock_ads_sheet.format.call_count == 2
 
     # Проверяем заполнение листа истории
     mock_history_sheet.clear.assert_called_once()
-    mock_history_sheet.update.assert_called_once()
-    mock_history_sheet.format.assert_called_once()
+    assert mock_history_sheet.update.call_count == 2
+    assert mock_history_sheet.format.call_count == 2
 
 
 def test_google_sheets_exporter_creates_sheet_if_not_found(
@@ -96,4 +96,5 @@ def test_google_sheets_exporter_creates_sheet_if_not_found(
     assert url == "https://docs.google.com/spreadsheets/d/test_id"
     mock_spreadsheet.add_worksheet.assert_called_once_with(title="Объявления", rows=100, cols=20)
     created_sheet.clear.assert_called_once()
-    created_sheet.update.assert_called_once()
+    assert created_sheet.update.call_count == 2
+    assert created_sheet.format.call_count == 2

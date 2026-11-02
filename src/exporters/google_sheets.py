@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,10 +50,16 @@ class GoogleSheetsExporter(BaseExporter[str]):
         rows: list[list[Any]],
     ) -> None:
         worksheet.clear()
+
+        updated_at = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC")
+        worksheet.update(values=[[f"Последнее обновление: {updated_at}"]], range_name="A1")
+        worksheet.format("A1", {"textFormat": {"italic": True, "bold": True}})
+
         data = [headers, *rows]
-        worksheet.update(values=data, range_name="A1")
+        worksheet.update(values=data, range_name="A3")
+
         end_col = chr(ord("A") + len(headers) - 1)
-        worksheet.format(f"A1:{end_col}1", {"textFormat": {"bold": True}})
+        worksheet.format(f"A3:{end_col}3", {"textFormat": {"bold": True}})
 
     def export(
         self,

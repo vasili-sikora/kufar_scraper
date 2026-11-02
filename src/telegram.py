@@ -5,6 +5,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
+import httpx
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -188,6 +189,24 @@ async def create_bot():
         ]
     )
     await dp.start_polling(bot)
+
+
+def send_telegram_notification(text: str) -> None:
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_USER_ID:
+        return
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_USER_ID,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": False,
+    }
+    try:
+        response = httpx.post(url, json=payload, timeout=10.0)
+        response.raise_for_status()
+    except httpx.HTTPError as e:
+        logger.warning("Failed to send telegram notification: %s", e)
 
 
 if __name__ == "__main__":
