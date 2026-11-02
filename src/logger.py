@@ -5,13 +5,15 @@ from typing import Literal
 
 LOGS_DIR = Path(__file__).resolve().parent.parent / "logs"
 
+MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB
 
-def setup_logging(interface: Literal["cli", "telegram"]) -> None:
+
+def setup_logging(interface: Literal["cli", "telegram", "cron"]) -> None:
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     file = LOGS_DIR / f"{interface}.log"
     file_handler = RotatingFileHandler(
         filename=file,
-        maxBytes=5 * 1024 * 1024,  # 5 MB
+        maxBytes=MAX_LOG_SIZE,
         backupCount=3,
         encoding="utf-8",
     )
