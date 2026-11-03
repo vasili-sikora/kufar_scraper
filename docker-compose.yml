@@ -1,0 +1,30 @@
+services:
+  bot:
+    build: .
+    container_name: kufar_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./google_credentials.json:/app/google_credentials.json:ro
+      - ./logs:/app/logs
+    command: python src/telegram.py
+
+  cron:
+    build: .
+    container_name: kufar_cron
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./google_credentials.json:/app/google_credentials.json:ro
+      - ./logs:/app/logs
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Starting cron scheduler loop (interval: 3 hours)..."
+        while true; do
+          python src/main.py --cron
+          echo "Sleeping for 3 hours..."
+          sleep 10800
+        done
