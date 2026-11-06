@@ -19,7 +19,7 @@ from aiogram.types.error_event import ErrorEvent
 from aiogram.types.input_file import FSInputFile
 
 from client import KufarClient
-from config import TELEGRAM_BOT_TOKEN, TELEGRAM_USER_ID
+from config import CRON_INTERVAL_HOURS, TELEGRAM_BOT_TOKEN, TELEGRAM_USER_ID
 from dependencies import get_service
 from exceptions import KufarScraperError
 from exporters import ExcelExporter, GoogleSheetsExporter
@@ -86,7 +86,8 @@ async def excel_handler(message: Message):
 
 
 def export_to_google_sheets() -> str:
-    with get_service() as service:
+    with get_service() as service, KufarClient() as client:
+        service.sync_ads_to_db(client)
         return service.export_ads(GoogleSheetsExporter())
 
 
@@ -170,6 +171,30 @@ async def scraper_error_handler(event: ErrorEvent):
         await event.update.message.answer(str(event.exception))
 
 
+async def scheduled_sync_loop() -> None:
+    """Периодическая фоновая синхронизация объявлений и обновление Google Таблицы."""
+    if CRON_INTERVAL_HOURS <= 0:
+        logger.info("Scheduled sync is disabled (CRON_INTERVAL_HOURS <= 0).")
+        return
+
+    interval_seconds = CRON_INTERVAL_HOURS * 3600
+    logger.info("Scheduled sync loop active (interval: %d hours).", CRON_INTERVAL_HOURS)
+
+    while True:
+        await asyncio.sleep(interval_seconds)
+        try:
+            logger.info("Starting scheduled sync job in bot...")
+            sheet_url = await asyncio.to_thread(export_to_google_sheets)
+            logger.info("Scheduled sync job completed successfully.")
+            send_telegram_notification(
+                f"<b>Cron: Синхронизация Kufar завершена</b>\n"
+                f"<a href='{sheet_url}'>Открыть Google Таблицу</a>"
+            )
+        except Exception as e:
+            logger.exception("Scheduled sync job failed")
+            send_telegram_notification(f"<b>Cron: Ошибка синхронизации Kufar</b>\n<code>{e}</code>")
+
+
 async def create_bot():
     setup_logging("telegram")
     logger.info("Starting Telegram bot...")
@@ -188,6 +213,7 @@ async def create_bot():
             BotCommand(command="history", description="Get advertisement history"),
         ]
     )
+    _ = asyncio.create_task(scheduled_sync_loop())
     await dp.start_polling(bot)
 
 

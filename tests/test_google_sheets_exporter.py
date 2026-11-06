@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import gspread
 import pytest
@@ -26,9 +26,35 @@ def test_google_sheets_exporter_raises_file_not_found_on_missing_credentials(
     advertisement: AdvertisementDto, tmp_path: Path
 ):
     missing_creds = tmp_path / "non_existent.json"
-    exporter = GoogleSheetsExporter(spreadsheet_id="some_id", credentials_path=missing_creds)
-    with pytest.raises(FileNotFoundError, match="Google credentials file not found"):
+    exporter = GoogleSheetsExporter(
+        spreadsheet_id="some_id",
+        credentials_path=missing_creds,
+        credentials_json="",
+    )
+    with pytest.raises(FileNotFoundError, match="Google credentials"):
         exporter.export([advertisement])
+
+
+@patch("gspread.service_account_from_dict")
+def test_google_sheets_exporter_uses_credentials_json(
+    mock_service_account_from_dict: MagicMock, advertisement: AdvertisementDto
+):
+    mock_client = MagicMock(spec=gspread.Client)
+    mock_service_account_from_dict.return_value = mock_client
+    mock_spreadsheet = MagicMock(spec=gspread.Spreadsheet)
+    mock_spreadsheet.url = "https://docs.google.com/spreadsheets/d/test_id"
+    mock_client.open_by_key.return_value = mock_spreadsheet
+
+    exporter = GoogleSheetsExporter(
+        spreadsheet_id="test_id",
+        credentials_json='{"type": "service_account", "project_id": "test"}',
+        credentials_path=Path("non_existent.json"),
+    )
+    url = exporter.export([advertisement])
+    assert url == "https://docs.google.com/spreadsheets/d/test_id"
+    mock_service_account_from_dict.assert_called_once_with(
+        {"type": "service_account", "project_id": "test"}
+    )
 
 
 def test_google_sheets_exporter_successful_export_with_history(

@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -6,7 +7,11 @@ from typing import Any
 import gspread
 from gspread import Client, Spreadsheet, Worksheet
 
-from config import GOOGLE_SERVICE_ACCOUNT_FILE, GOOGLE_SPREADSHEET_ID
+from config import (
+    GOOGLE_SERVICE_ACCOUNT_FILE,
+    GOOGLE_SERVICE_ACCOUNT_JSON,
+    GOOGLE_SPREADSHEET_ID,
+)
 from exporters.base import BaseExporter
 from schemas import AdvertisementDto, AdvertisementHistoryDto
 
@@ -20,20 +25,27 @@ class GoogleSheetsExporter(BaseExporter[str]):
         self,
         spreadsheet_id: str = GOOGLE_SPREADSHEET_ID,
         credentials_path: Path = GOOGLE_SERVICE_ACCOUNT_FILE,
+        credentials_json: str = GOOGLE_SERVICE_ACCOUNT_JSON,
         client: Client | None = None,
     ):
         self._spreadsheet_id = spreadsheet_id
         self._credentials_path = credentials_path
+        self._credentials_json = credentials_json
         self._client = client
 
     def _get_client(self) -> Client:
         if self._client is None:
-            if not self._credentials_path.exists():
+            if self._credentials_json:
+                logger.info("Authorizing Google Service Account from environment variable")
+                info = json.loads(self._credentials_json)
+                self._client = gspread.service_account_from_dict(info)
+            elif self._credentials_path.exists():
+                logger.info("Authorizing Google Service Account from %s", self._credentials_path)
+                self._client = gspread.service_account(filename=str(self._credentials_path))
+            else:
                 raise FileNotFoundError(
                     f"Google credentials file not found at: {self._credentials_path}"
                 )
-            logger.info("Authorizing Google Service Account from %s", self._credentials_path)
-            self._client = gspread.service_account(filename=str(self._credentials_path))
         return self._client
 
     def _get_or_create_worksheet(self, spreadsheet: Spreadsheet, title: str) -> Worksheet:
