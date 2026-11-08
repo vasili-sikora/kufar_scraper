@@ -29,7 +29,7 @@ class AdvertisementService:
             logger.info(f"Processed {len(ads)} ads.")
         except httpx.HTTPError as e:
             logger.exception("Network error while syncing ads")
-            raise KufarScraperNetworkError("Не удалось загрузить объявления") from e
+            raise KufarScraperNetworkError("Failed to fetch advertisements") from e
 
     def get_all_ads_from_db(self) -> list[AdvertisementDto]:
         logger.info("Fetching all ads from database...")
@@ -48,7 +48,7 @@ class AdvertisementService:
             return result
         except (ValueError, OSError) as e:
             logger.exception("Error while exporting ads")
-            raise KufarScraperError("Не удалось экспортировать данные") from e
+            raise KufarScraperError("Failed to export data") from e
 
     def get_advertisement_history(self, advertisement_id: int) -> list[AdvertisementHistoryDto]:
         logger.info(f"Fetching advertisement history for ID: {advertisement_id}")

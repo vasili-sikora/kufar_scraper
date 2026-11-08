@@ -27,8 +27,8 @@ def test_excel_exporter_creates_file_with_correct_sheets(
 
     assert result_path.exists()
     wb = load_workbook(result_path)
-    assert "Объявления" in wb.sheetnames
-    assert "История изменений" in wb.sheetnames
+    assert ExcelExporter.ADS_SHEET_TITLE in wb.sheetnames
+    assert ExcelExporter.HISTORY_SHEET_TITLE in wb.sheetnames
 
 
 def test_excel_exporter_without_history(tmp_path: Path, advertisement: AdvertisementDto):
@@ -40,5 +40,5 @@ def test_excel_exporter_without_history(tmp_path: Path, advertisement: Advertise
 
     assert result_path.exists()
     wb = load_workbook(result_path)
-    assert "Объявления" in wb.sheetnames
-    assert "История изменений" not in wb.sheetnames
+    assert ExcelExporter.ADS_SHEET_TITLE in wb.sheetnames
+    assert ExcelExporter.HISTORY_SHEET_TITLE not in wb.sheetnames

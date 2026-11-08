@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class GoogleSheetsExporter(BaseExporter[str]):
-    """Экспортер данных в Google Таблицы через gspread."""
+    """Data exporter to Google Sheets via gspread."""
 
     def __init__(
         self,
@@ -64,7 +64,7 @@ class GoogleSheetsExporter(BaseExporter[str]):
         worksheet.clear()
 
         updated_at = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC")
-        worksheet.update(values=[[f"Последнее обновление: {updated_at}"]], range_name="A1")
+        worksheet.update(values=[[f"Last updated: {updated_at}"]], range_name="A1")
         worksheet.format("A1", {"textFormat": {"italic": True, "bold": True}})
 
         data = [headers, *rows]

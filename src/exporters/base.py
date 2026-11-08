@@ -5,27 +5,27 @@ from schemas import AdvertisementDto, AdvertisementHistoryDto
 
 
 class BaseExporter[T](ABC):
-    """Базовый абстрактный класс экспортера."""
+    """Base abstract exporter class."""
 
-    ADS_SHEET_TITLE: ClassVar[str] = "Объявления"
-    HISTORY_SHEET_TITLE: ClassVar[str] = "История изменений"
+    ADS_SHEET_TITLE: ClassVar[str] = "Advertisements"
+    HISTORY_SHEET_TITLE: ClassVar[str] = "Change History"
 
     ADS_HEADERS: ClassVar[list[str]] = [
         "Kufar ID",
-        "Название",
-        "Цена",
-        "Статус",
-        "Описание",
-        "Дата публикации",
-        "Ссылка",
+        "Title",
+        "Price",
+        "Status",
+        "Description",
+        "Publication Date",
+        "Link",
     ]
 
     HISTORY_HEADERS: ClassVar[list[str]] = [
-        "ID объявления",
-        "Поле",
-        "Старое значение",
-        "Новое значение",
-        "Дата изменения",
+        "Ad ID",
+        "Field",
+        "Old Value",
+        "New Value",
+        "Change Date",
     ]
 
     def _prepare_ads_rows(self, ads: list[AdvertisementDto]) -> list[list[Any]]:
@@ -66,4 +66,4 @@ class BaseExporter[T](ABC):
         ads: list[AdvertisementDto],
         ads_history: list[AdvertisementHistoryDto] | None = None,
     ) -> T:
-        """Экспортирует данные объявлений и истории."""
+        """Export advertisements and change history data."""

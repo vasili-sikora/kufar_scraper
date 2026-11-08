@@ -185,7 +185,7 @@ async def global_error_handler(event: ErrorEvent):
 
 
 async def scheduled_sync_loop() -> None:
-    """Периодическая фоновая синхронизация объявлений и обновление Google Таблицы."""
+    """Periodic background sync of advertisements and Google Sheets update."""
     if CRON_INTERVAL_HOURS <= 0:
         logger.info("Scheduled sync is disabled (CRON_INTERVAL_HOURS <= 0).")
         return
@@ -200,12 +200,11 @@ async def scheduled_sync_loop() -> None:
             sheet_url = await asyncio.to_thread(export_to_google_sheets)
             logger.info("Scheduled sync job completed successfully.")
             send_telegram_notification(
-                f"<b>Cron: Синхронизация Kufar завершена</b>\n"
-                f"<a href='{sheet_url}'>Открыть Google Таблицу</a>"
+                f"<b>Cron: Kufar sync completed</b>\n<a href='{sheet_url}'>Open Google Sheet</a>"
             )
         except Exception as e:
             logger.exception("Scheduled sync job failed")
-            send_telegram_notification(f"<b>Cron: Ошибка синхронизации Kufar</b>\n<code>{e}</code>")
+            send_telegram_notification(f"<b>Cron: Kufar sync error</b>\n<code>{e}</code>")
 
 
 async def create_bot():

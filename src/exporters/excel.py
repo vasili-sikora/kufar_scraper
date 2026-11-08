@@ -13,20 +13,20 @@ HEADER_ALIGNMENT = Alignment(horizontal="center", vertical="center")
 
 ADS_COLUMN_WIDTHS = {
     "A": 14,  # Kufar ID
-    "B": 35,  # Название
-    "C": 12,  # Цена
-    "D": 12,  # Статус
-    "E": 50,  # Описание
-    "F": 18,  # Дата публикации
-    "G": 35,  # Ссылка
+    "B": 35,  # Title
+    "C": 12,  # Price
+    "D": 12,  # Status
+    "E": 50,  # Description
+    "F": 18,  # Publication Date
+    "G": 35,  # Link
 }
 
 HISTORY_COLUMN_WIDTHS = {
-    "A": 16,  # ID объявления
-    "B": 16,  # Поле
-    "C": 30,  # Старое значение
-    "D": 30,  # Новое значение
-    "E": 20,  # Дата изменения
+    "A": 16,  # Ad ID
+    "B": 16,  # Field
+    "C": 30,  # Old Value
+    "D": 30,  # New Value
+    "E": 20,  # Change Date
 }
 
 
@@ -93,6 +93,6 @@ def export_to_excel(
     ads_history: list[AdvertisementHistoryDto] | None = None,
     filepath: Path = EXCEL_PATH,
 ) -> Path:
-    """Функция-обёртка для обратной совместимости."""
+    """Wrapper function for backwards compatibility."""
     exporter = ExcelExporter(filepath=filepath)
     return exporter.export(ads=ads, ads_history=ads_history)

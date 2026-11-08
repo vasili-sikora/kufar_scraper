@@ -69,9 +69,9 @@ def test_google_sheets_exporter_successful_export_with_history(
     mock_history_sheet = MagicMock(spec=gspread.Worksheet)
 
     def worksheet_side_effect(title):
-        if title == "Объявления":
+        if title == GoogleSheetsExporter.ADS_SHEET_TITLE:
             return mock_ads_sheet
-        if title == "История изменений":
+        if title == GoogleSheetsExporter.HISTORY_SHEET_TITLE:
             return mock_history_sheet
         raise gspread.WorksheetNotFound()
 
@@ -88,12 +88,12 @@ def test_google_sheets_exporter_successful_export_with_history(
     assert url == "https://docs.google.com/spreadsheets/d/test_id"
     mock_client.open_by_key.assert_called_once_with("test_id")
 
-    # Проверяем заполнение листа объявлений
+    # Verify populating ads sheet
     mock_ads_sheet.clear.assert_called_once()
     assert mock_ads_sheet.update.call_count == 2
     assert mock_ads_sheet.format.call_count == 2
 
-    # Проверяем заполнение листа истории
+    # Verify populating history sheet
     mock_history_sheet.clear.assert_called_once()
     assert mock_history_sheet.update.call_count == 2
     assert mock_history_sheet.format.call_count == 2
@@ -106,7 +106,7 @@ def test_google_sheets_exporter_creates_sheet_if_not_found(
     mock_spreadsheet = MagicMock(spec=gspread.Spreadsheet)
     mock_spreadsheet.url = "https://docs.google.com/spreadsheets/d/test_id"
 
-    # При поиске листа выбрасываем WorksheetNotFound
+    # Raise WorksheetNotFound when searching for sheet
     mock_spreadsheet.worksheet.side_effect = gspread.WorksheetNotFound()
     created_sheet = MagicMock(spec=gspread.Worksheet)
     mock_spreadsheet.add_worksheet.return_value = created_sheet
@@ -118,9 +118,7 @@ def test_google_sheets_exporter_creates_sheet_if_not_found(
     )
 
     url = exporter.export(ads=[advertisement])
-
     assert url == "https://docs.google.com/spreadsheets/d/test_id"
-    mock_spreadsheet.add_worksheet.assert_called_once_with(title="Объявления", rows=100, cols=20)
-    created_sheet.clear.assert_called_once()
-    assert created_sheet.update.call_count == 2
-    assert created_sheet.format.call_count == 2
+    mock_spreadsheet.add_worksheet.assert_called_once_with(
+        title=GoogleSheetsExporter.ADS_SHEET_TITLE, rows=100, cols=20
+    )

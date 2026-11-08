@@ -66,12 +66,11 @@ def run_cron() -> None:
             sheet_url = service.export_ads(GoogleSheetsExporter())
         logger.info("Cron job completed successfully.")
         send_telegram_notification(
-            f"<b>Cron: Синхронизация Kufar завершена</b>\n"
-            f"<a href='{sheet_url}'>Открыть Google Таблицу</a>"
+            f"<b>Cron: Kufar sync completed</b>\n<a href='{sheet_url}'>Open Google Sheet</a>"
         )
     except Exception as e:
         logger.exception("An error occurred during the cron job.")
-        send_telegram_notification(f"<b>Cron: Ошибка синхронизации Kufar</b>\n<code>{e}</code>")
+        send_telegram_notification(f"<b>Cron: Kufar sync error</b>\n<code>{e}</code>")
         sys.exit(1)
 
 
