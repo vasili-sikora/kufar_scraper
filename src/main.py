@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -21,6 +22,11 @@ def parse_args() -> argparse.Namespace:
         "--cron",
         action="store_true",
         help="Run the script in cron mode (without Telegram bot and CLI)",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable console logs in stdout",
     )
     return parser.parse_args()
 
@@ -71,6 +77,9 @@ def run_cron() -> None:
 
 def main() -> None:
     args = parse_args()
+    if args.debug:
+        os.environ["ENABLE_CLI_LOGS"] = "true"
+
     if args.cron:
         run_cron()
     else:

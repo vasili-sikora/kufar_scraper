@@ -1,3 +1,4 @@
+import os
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -11,12 +12,19 @@ def test_parse_args_default():
     with patch.object(sys, "argv", ["main.py"]):
         args = parse_args()
         assert args.cron is False
+        assert args.debug is False
 
 
 def test_parse_args_cron_flag():
     with patch.object(sys, "argv", ["main.py", "--cron"]):
         args = parse_args()
         assert args.cron is True
+
+
+def test_parse_args_debug_flag():
+    with patch.object(sys, "argv", ["main.py", "--debug"]):
+        args = parse_args()
+        assert args.debug is True
 
 
 @patch("main.setup_logging")
@@ -75,6 +83,7 @@ def test_main_routes_to_cron(
     mock_parse_args: MagicMock,
 ):
     mock_parse_args.return_value.cron = True
+    mock_parse_args.return_value.debug = False
 
     main()
 
@@ -91,8 +100,23 @@ def test_main_routes_to_interactive(
     mock_parse_args: MagicMock,
 ):
     mock_parse_args.return_value.cron = False
+    mock_parse_args.return_value.debug = False
 
     main()
 
     mock_run_interactive.assert_called_once()
     mock_run_cron.assert_not_called()
+
+
+@patch("main.parse_args")
+@patch("main.run_interactive")
+def test_main_sets_enable_cli_logs_when_debug(
+    mock_run_interactive: MagicMock,
+    mock_parse_args: MagicMock,
+):
+    mock_parse_args.return_value.cron = False
+    mock_parse_args.return_value.debug = True
+
+    with patch.dict(os.environ, {}, clear=True):
+        main()
+        assert os.environ.get("ENABLE_CLI_LOGS") == "true"
