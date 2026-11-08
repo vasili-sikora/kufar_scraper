@@ -1,7 +1,10 @@
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Literal
+
+from config import ENABLE_CLI_LOGS
 
 LOGS_DIR = Path(__file__).resolve().parent.parent / "logs"
 
@@ -18,10 +21,15 @@ def setup_logging(interface: Literal["cli", "telegram", "cron"]) -> None:
         encoding="utf-8",
     )
 
+    handlers: list[logging.Handler] = [file_handler]
+
+    if ENABLE_CLI_LOGS or os.getenv("RAILWAY_ENVIRONMENT"):
+        handlers.append(logging.StreamHandler())
+
     logging.basicConfig(
-        handlers=[file_handler],
+        handlers=handlers,
         level=logging.INFO,
-        format=("%(asctime)s | %(levelname)s | %(name)s | %(message)s"),
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         force=True,
     )
