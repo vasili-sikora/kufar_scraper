@@ -70,7 +70,7 @@ class KufarClient:
         if not item_url:
             return ""
 
-        sleep(uniform(0.8, 1.8))
+        sleep(uniform(1.5, 2.0))
         try:
             logger.info(f"Fetching item page HTML from Kufar: {item_url}")
             response = self._session.get(item_url)
