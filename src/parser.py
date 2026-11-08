@@ -1,6 +1,9 @@
 import html
 import json
+import logging
 import re
+
+logger = logging.getLogger(__name__)
 
 
 class AdvertisementHtmlParser:
@@ -24,6 +27,7 @@ class AdvertisementHtmlParser:
             desc = ad_data.get("body") or ad_data.get("description")
             return desc.strip() if desc else None
         except json.JSONDecodeError:
+            logger.warning("Failed to decode JSON from __NEXT_DATA__ payload")
             return None
 
     def _get_description_from_itemprop(self) -> str | None:

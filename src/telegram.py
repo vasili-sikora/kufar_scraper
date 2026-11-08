@@ -44,12 +44,17 @@ logger = logging.getLogger(__name__)
 def log_message(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(*args, **kwargs) -> Any:
+        message = next((arg for arg in args if isinstance(arg, Message)), None)
+        user_info = (
+            f"user_id={message.from_user.id}" if message and message.from_user else "unknown_user"
+        )
         try:
             res = await func(*args, **kwargs)
-            logger.info("Message successfully sent")
+            logger.info("Command /%s executed successfully for %s", func.__name__, user_info)
             return res
         except TelegramNetworkError:
-            logger.exception("Unable to send message")
+            logger.exception("Telegram network error during /%s for %s", func.__name__, user_info)
+            raise
 
     return wrapper
 
@@ -82,7 +87,6 @@ async def excel_handler(message: Message):
         document=FSInputFile(excel_path),
         caption="Excel report generated successfully!",
     )
-    logger.info("Message sent successfully")
 
 
 def export_to_google_sheets() -> str:
@@ -169,6 +173,15 @@ async def telegram_network_error_handler(event: ErrorEvent):
 async def scraper_error_handler(event: ErrorEvent):
     if event.update.message is not None:
         await event.update.message.answer(str(event.exception))
+
+
+@dp.error()
+async def global_error_handler(event: ErrorEvent):
+    logger.exception("Unhandled error in bot: %s", event.exception)
+    if event.update and event.update.message:
+        await event.update.message.answer(
+            "An unexpected error occurred while processing your request. Please try again later."
+        )
 
 
 async def scheduled_sync_loop() -> None:

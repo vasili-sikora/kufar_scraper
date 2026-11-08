@@ -1,3 +1,5 @@
+import logging
+
 from parser import AdvertisementHtmlParser
 
 
@@ -26,6 +28,22 @@ def test_parser_extracts_description_from_next_data():
     result = parser.get_item_description()
 
     assert result == "Процессор Ryzen 5 5600\nВидеокарта RTX 3060\nОЗУ 16GB"
+
+
+def test_parser_logs_warning_on_invalid_json_in_next_data(caplog):
+    html_content = """
+    <html>
+        <body>
+            <script id="__NEXT_DATA__" type="application/json">{invalid json}</script>
+        </body>
+    </html>
+    """
+    parser = AdvertisementHtmlParser(html_content)
+    with caplog.at_level(logging.WARNING):
+        result = parser.get_item_description()
+
+    assert result == ""
+    assert "Failed to decode JSON from __NEXT_DATA__ payload" in caplog.text
 
 
 def test_parser_fallbacks_to_itemprop_when_next_data_missing():

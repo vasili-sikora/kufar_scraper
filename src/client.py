@@ -36,15 +36,15 @@ class KufarClient:
 
     def get_my_items(self) -> list[AdvertisementDto]:
         url = f"{self._base_url}/{MY_ITEMS_URL.lstrip('/')}"
-        logger.info(f"Fetching my items from Kufar API: {url}")
+        logger.info("Fetching my items from Kufar API: %s", url)
         response = self._session.get(url)
-        logger.info(f"Received response with status code: {response.status_code}")
+        logger.info("Received response with status code: %d", response.status_code)
         response.raise_for_status()
 
         data = response.json()
         ads_raw = data.get("ads", [])
 
-        logger.info(f"Found {len(ads_raw)} ads in the response.")
+        logger.info("Found %d ads in the response.", len(ads_raw))
         parsed_items: list[AdvertisementDto] = []
         for ad in ads_raw:
             price_raw = ad.get("price_byn", "0")
@@ -72,15 +72,22 @@ class KufarClient:
 
         sleep(uniform(1.5, 2.0))
         try:
-            logger.info(f"Fetching item page HTML from Kufar: {item_url}")
+            logger.info("Fetching item page HTML from Kufar: %s", item_url)
             response = self._session.get(item_url)
-            logger.info(f"Received response with status code: {response.status_code}")
+            logger.info("Received response with status code: %d", response.status_code)
             response.raise_for_status()
-            page_html = response.text
-            return page_html
+            return response.text
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                logger.warning(f"Item page not found (404): {item_url}")
+                logger.warning("Item page not found (404): %s", item_url)
                 return ""
-            logger.exception("HTTP error while fetching item page HTML")
+            if e.response.status_code == 429:
+                logger.error(
+                    "Kufar rate limit reached (HTTP 429) for %s. Backoff required.", item_url
+                )
+            else:
+                logger.exception("HTTP status error while fetching item page HTML: %s", item_url)
+            raise
+        except httpx.RequestError:
+            logger.exception("Network request error while fetching item page HTML: %s", item_url)
             raise
