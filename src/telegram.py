@@ -197,11 +197,8 @@ async def scheduled_sync_loop() -> None:
         await asyncio.sleep(interval_seconds)
         try:
             logger.info("Starting scheduled sync job in bot...")
-            sheet_url = await asyncio.to_thread(export_to_google_sheets)
+            await asyncio.to_thread(export_to_google_sheets)
             logger.info("Scheduled sync job completed successfully.")
-            send_telegram_notification(
-                f"<b>Cron: Kufar sync completed</b>\n<a href='{sheet_url}'>Open Google Sheet</a>"
-            )
         except Exception as e:
             logger.exception("Scheduled sync job failed")
             send_telegram_notification(f"<b>Cron: Kufar sync error</b>\n<code>{e}</code>")
