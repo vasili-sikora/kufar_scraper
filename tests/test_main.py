@@ -51,6 +51,7 @@ def test_run_cron_success(
     mock_service.export_ads.assert_called_once()
 
 
+@patch("main.send_telegram_notification")
 @patch("main.setup_logging")
 @patch("main.init_db")
 @patch("main.KufarClient")
@@ -60,6 +61,7 @@ def test_run_cron_handles_scraper_error(
     mock_kufar_client_cls: MagicMock,
     mock_init_db: MagicMock,
     mock_setup_logging: MagicMock,
+    mock_send_telegram_notification: MagicMock,
 ):
     mock_service = MagicMock()
     mock_client = MagicMock()
@@ -72,6 +74,8 @@ def test_run_cron_handles_scraper_error(
         run_cron()
 
     assert exc_info.value.code == 1
+    mock_send_telegram_notification.assert_called_once()
+    assert "Failed to fetch" in mock_send_telegram_notification.call_args[0][0]
 
 
 @patch("main.parse_args")
